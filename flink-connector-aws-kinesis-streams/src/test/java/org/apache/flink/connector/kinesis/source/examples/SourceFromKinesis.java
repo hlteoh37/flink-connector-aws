@@ -46,7 +46,7 @@ public class SourceFromKinesis {
                         "arn:aws:kinesis:us-east-1:290038087681:stream/LoadTestBeta_Input_35",
                         consumerConfig,
                         new SimpleStringSchema(),
-                    ShardAssignerFactory.uniformShardAssigner());
+                        ShardAssignerFactory.uniformShardAssigner());
         env.fromSource(kdsSource, WatermarkStrategy.noWatermarks(), "Kinesis source")
                 .returns(TypeInformation.of(String.class))
                 .print();

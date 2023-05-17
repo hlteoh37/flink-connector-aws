@@ -43,12 +43,30 @@ import java.util.concurrent.ConcurrentHashMap;
 @Internal
 public class KinesisStreamProxy implements StreamProxy {
 
-    private final KinesisClient kinesisClient;
+    private final KinesisClient kinesisClientListShards;
+    private final KinesisClient kinesisClientGetShardsIterator;
+    private final KinesisClient kinesisClientGetRecords;
+    private final KinesisClient kinesisClientDescribeStream;
+    private final KinesisClient defaultKinesisClient;
+
     private final Map<String, String> shardIdToIteratorStore;
 
-    public KinesisStreamProxy(KinesisClient kinesisClient) {
-        this.kinesisClient = kinesisClient;
+    public KinesisStreamProxy(KinesisClientFactoryInterface kinesisClientFactory) {
         this.shardIdToIteratorStore = new ConcurrentHashMap<>();
+
+        this.kinesisClientGetRecords =
+                kinesisClientFactory.getKinesisClient(
+                        KinesisClientFactory.KinesisClientType.GET_RECORDS);
+        this.kinesisClientGetShardsIterator =
+                kinesisClientFactory.getKinesisClient(
+                        KinesisClientFactory.KinesisClientType.GET_SHARD_ITERATOR);
+        this.kinesisClientListShards =
+                kinesisClientFactory.getKinesisClient(
+                        KinesisClientFactory.KinesisClientType.LIST_SHARDS);
+        this.kinesisClientDescribeStream =
+                kinesisClientFactory.getKinesisClient(
+                        KinesisClientFactory.KinesisClientType.DESCRIBE_STREAM);
+        this.defaultKinesisClient = kinesisClientFactory.getKinesisClient(null);
     }
 
     @Override
@@ -59,7 +77,7 @@ public class KinesisStreamProxy implements StreamProxy {
         String nextToken = null;
         do {
             listShardsResponse =
-                    kinesisClient.listShards(
+                    kinesisClientListShards.listShards(
                             ListShardsRequest.builder()
                                     .streamARN(streamArn)
                                     .exclusiveStartShardId(
@@ -74,15 +92,29 @@ public class KinesisStreamProxy implements StreamProxy {
         return shards;
     }
 
+    /**
+     * Retrieves records from the stream.
+     *
+     * @param streamArn the ARN of the stream
+     * @param shardId the shard to subscribe from
+     * @param startingPosition the starting position to read from
+     * @param maxRecordsToGet the maximum number of records to fetch for this getRecords attempt
+     * @return the response with records. Includes both the returned records and the subsequent
+     *     shard iterator to use.
+     */
     @Override
     public GetRecordsResponse getRecords(
-            String streamArn, String shardId, StartingPosition startingPosition) {
+            String streamArn,
+            String shardId,
+            StartingPosition startingPosition,
+            int maxRecordsToGet) {
         String shardIterator =
                 shardIdToIteratorStore.computeIfAbsent(
                         shardId, (s) -> getShardIterator(streamArn, s, startingPosition));
 
         try {
-            GetRecordsResponse getRecordsResponse = getRecords(streamArn, shardIterator);
+            GetRecordsResponse getRecordsResponse =
+                    getRecords(streamArn, shardIterator, maxRecordsToGet);
             if (getRecordsResponse.nextShardIterator() != null) {
                 shardIdToIteratorStore.put(shardId, getRecordsResponse.nextShardIterator());
             }
@@ -90,7 +122,8 @@ public class KinesisStreamProxy implements StreamProxy {
         } catch (ExpiredIteratorException e) {
             // Eagerly retry getRecords() if the iterator is expired
             shardIterator = getShardIterator(streamArn, shardId, startingPosition);
-            GetRecordsResponse getRecordsResponse = getRecords(streamArn, shardIterator);
+            GetRecordsResponse getRecordsResponse =
+                    getRecords(streamArn, shardIterator, maxRecordsToGet);
             if (getRecordsResponse.nextShardIterator() != null) {
                 shardIdToIteratorStore.put(shardId, getRecordsResponse.nextShardIterator());
             }
@@ -132,19 +165,27 @@ public class KinesisStreamProxy implements StreamProxy {
                 }
         }
 
-        return kinesisClient.getShardIterator(requestBuilder.build()).shardIterator();
+        return kinesisClientGetShardsIterator
+                .getShardIterator(requestBuilder.build())
+                .shardIterator();
     }
 
-    private GetRecordsResponse getRecords(String streamArn, String shardIterator) {
-        return kinesisClient.getRecords(
+    private GetRecordsResponse getRecords(
+            String streamArn, String shardIterator, int maxRecordsToGet) {
+        return kinesisClientGetRecords.getRecords(
                 GetRecordsRequest.builder()
                         .streamARN(streamArn)
                         .shardIterator(shardIterator)
+                        .limit(maxRecordsToGet)
                         .build());
     }
 
     @Override
     public void close() throws IOException {
-        kinesisClient.close();
+        kinesisClientListShards.close();
+        kinesisClientGetShardsIterator.close();
+        kinesisClientGetRecords.close();
+        kinesisClientDescribeStream.close();
+        defaultKinesisClient.close();
     }
 }

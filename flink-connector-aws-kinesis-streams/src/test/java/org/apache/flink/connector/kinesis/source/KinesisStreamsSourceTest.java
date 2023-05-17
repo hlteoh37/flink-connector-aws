@@ -35,7 +35,11 @@ class KinesisStreamsSourceTest {
     void testSupportsContinuousUnboundedOnly() throws Exception {
         final Properties sourceConfig = new Properties();
         final KinesisStreamsSource<String> source =
-                new KinesisStreamsSource<>(STREAM_ARN, sourceConfig, new SimpleStringSchema(), ShardAssignerFactory.uniformShardAssigner());
+                new KinesisStreamsSource<>(
+                        STREAM_ARN,
+                        sourceConfig,
+                        new SimpleStringSchema(),
+                        ShardAssignerFactory.uniformShardAssigner());
 
         assertThat(source.getBoundedness()).isEqualTo(Boundedness.CONTINUOUS_UNBOUNDED);
     }

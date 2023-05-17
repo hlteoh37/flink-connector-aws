@@ -53,5 +53,8 @@ public interface StreamProxy extends Closeable {
      *     shard iterator to use.
      */
     GetRecordsResponse getRecords(
-            String streamArn, String shardId, StartingPosition startingPosition);
+            String streamArn,
+            String shardId,
+            StartingPosition startingPosition,
+            int maxRecordsToGet);
 }

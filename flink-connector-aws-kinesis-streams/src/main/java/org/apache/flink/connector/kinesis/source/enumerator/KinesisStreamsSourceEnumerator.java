@@ -25,7 +25,6 @@ import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.api.connector.source.SplitsAssignment;
 import org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.InitialPosition;
-import org.apache.flink.connector.kinesis.source.enumerator.assigner.ShardAssignerFactory;
 import org.apache.flink.connector.kinesis.source.exception.KinesisStreamsSourceException;
 import org.apache.flink.connector.kinesis.source.model.CompletedShardsEvent;
 import org.apache.flink.connector.kinesis.source.proxy.StreamProxy;
@@ -85,12 +84,12 @@ public class KinesisStreamsSourceEnumerator
     private String lastSeenShardId;
 
     public KinesisStreamsSourceEnumerator(
-        SplitEnumeratorContext<KinesisShardSplit> context,
-        String streamArn,
-        Properties consumerConfig,
-        StreamProxy streamProxy,
-        KinesisShardAssigner shardAssigner,
-        KinesisStreamsSourceEnumeratorState state) {
+            SplitEnumeratorContext<KinesisShardSplit> context,
+            String streamArn,
+            Properties consumerConfig,
+            StreamProxy streamProxy,
+            KinesisShardAssigner shardAssigner,
+            KinesisStreamsSourceEnumeratorState state) {
         this.context = context;
         this.streamArn = streamArn;
         this.consumerConfig = consumerConfig;

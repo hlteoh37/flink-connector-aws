@@ -38,7 +38,6 @@ import software.amazon.awssdk.services.kinesis.model.Record;
 import software.amazon.awssdk.services.kinesis.model.Shard;
 import software.amazon.awssdk.services.kinesis.model.ShardIteratorType;
 
-import java.io.IOException;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,6 +49,8 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatNoException;
 
 class KinesisStreamProxyTest {
+
+    private static final int GET_RECORD_MAX_COUNT = 100;
 
     @ParameterizedTest
     @NullAndEmptySource
@@ -71,7 +72,8 @@ class KinesisStreamProxyTest {
         TestingKinesisClient testKinesisClient = new TestingKinesisClient();
         testKinesisClient.setListShardsResponses(listShardItems);
 
-        KinesisStreamProxy kinesisStreamProxy = new KinesisStreamProxy(testKinesisClient);
+        KinesisStreamProxy kinesisStreamProxy =
+                new KinesisStreamProxy(ignored -> testKinesisClient);
 
         assertThat(kinesisStreamProxy.listShards(streamArn, lastSeenShardId))
                 .isEqualTo(expectedShards);
@@ -110,7 +112,8 @@ class KinesisStreamProxyTest {
         TestingKinesisClient testKinesisClient = new TestingKinesisClient();
         testKinesisClient.setListShardsResponses(listShardItems);
 
-        KinesisStreamProxy kinesisStreamProxy = new KinesisStreamProxy(testKinesisClient);
+        KinesisStreamProxy kinesisStreamProxy =
+                new KinesisStreamProxy(ignored -> testKinesisClient);
 
         assertThat(kinesisStreamProxy.listShards(streamArn, lastSeenShardId))
                 .isEqualTo(expectedShards);
@@ -145,11 +148,15 @@ class KinesisStreamProxyTest {
                         GetRecordsRequest.builder()
                                 .streamARN(streamArn)
                                 .shardIterator(expectedShardIterator)
+                                .limit(GET_RECORD_MAX_COUNT)
                                 .build()));
 
-        KinesisStreamProxy kinesisStreamProxy = new KinesisStreamProxy(testKinesisClient);
+        KinesisStreamProxy kinesisStreamProxy =
+                new KinesisStreamProxy(ignored -> testKinesisClient);
 
-        assertThat(kinesisStreamProxy.getRecords(streamArn, shardId, startingPosition))
+        assertThat(
+                        kinesisStreamProxy.getRecords(
+                                streamArn, shardId, startingPosition, GET_RECORD_MAX_COUNT))
                 .isEqualTo(expectedGetRecordsResponse);
     }
 
@@ -184,11 +191,15 @@ class KinesisStreamProxyTest {
                         GetRecordsRequest.builder()
                                 .streamARN(streamArn)
                                 .shardIterator(expectedShardIterator)
+                                .limit(GET_RECORD_MAX_COUNT)
                                 .build()));
 
-        KinesisStreamProxy kinesisStreamProxy = new KinesisStreamProxy(testKinesisClient);
+        KinesisStreamProxy kinesisStreamProxy =
+                new KinesisStreamProxy(ignored -> testKinesisClient);
 
-        assertThat(kinesisStreamProxy.getRecords(streamArn, shardId, startingPosition))
+        assertThat(
+                        kinesisStreamProxy.getRecords(
+                                streamArn, shardId, startingPosition, GET_RECORD_MAX_COUNT))
                 .isEqualTo(expectedGetRecordsResponse);
     }
 
@@ -224,11 +235,15 @@ class KinesisStreamProxyTest {
                         GetRecordsRequest.builder()
                                 .streamARN(streamArn)
                                 .shardIterator(expectedShardIterator)
+                                .limit(GET_RECORD_MAX_COUNT)
                                 .build()));
 
-        KinesisStreamProxy kinesisStreamProxy = new KinesisStreamProxy(testKinesisClient);
+        KinesisStreamProxy kinesisStreamProxy =
+                new KinesisStreamProxy(ignored -> testKinesisClient);
 
-        assertThat(kinesisStreamProxy.getRecords(streamArn, shardId, startingPosition))
+        assertThat(
+                        kinesisStreamProxy.getRecords(
+                                streamArn, shardId, startingPosition, GET_RECORD_MAX_COUNT))
                 .isEqualTo(expectedGetRecordsResponse);
     }
 
@@ -253,7 +268,8 @@ class KinesisStreamProxyTest {
                         .build();
 
         TestingKinesisClient testKinesisClient = new TestingKinesisClient();
-        KinesisStreamProxy kinesisStreamProxy = new KinesisStreamProxy(testKinesisClient);
+        KinesisStreamProxy kinesisStreamProxy =
+                new KinesisStreamProxy(ignored -> testKinesisClient);
 
         // When read for the first time
         testKinesisClient.setNextShardIterator(firstShardIterator);
@@ -272,8 +288,11 @@ class KinesisStreamProxyTest {
                         GetRecordsRequest.builder()
                                 .streamARN(streamArn)
                                 .shardIterator(firstShardIterator)
+                                .limit(GET_RECORD_MAX_COUNT)
                                 .build()));
-        assertThat(kinesisStreamProxy.getRecords(streamArn, shardId, startingPosition))
+        assertThat(
+                        kinesisStreamProxy.getRecords(
+                                streamArn, shardId, startingPosition, GET_RECORD_MAX_COUNT))
                 .isEqualTo(firstGetRecordsResponse);
 
         // When read for the second time
@@ -290,8 +309,11 @@ class KinesisStreamProxyTest {
                         GetRecordsRequest.builder()
                                 .streamARN(streamArn)
                                 .shardIterator(secondShardIterator)
+                                .limit(GET_RECORD_MAX_COUNT)
                                 .build()));
-        assertThat(kinesisStreamProxy.getRecords(streamArn, shardId, startingPosition))
+        assertThat(
+                        kinesisStreamProxy.getRecords(
+                                streamArn, shardId, startingPosition, GET_RECORD_MAX_COUNT))
                 .isEqualTo(secondGetRecordsResponse);
     }
 
@@ -311,7 +333,8 @@ class KinesisStreamProxyTest {
                         .build();
 
         TestingKinesisClient testKinesisClient = new TestingKinesisClient();
-        KinesisStreamProxy kinesisStreamProxy = new KinesisStreamProxy(testKinesisClient);
+        KinesisStreamProxy kinesisStreamProxy =
+                new KinesisStreamProxy(ignored -> testKinesisClient);
 
         // When expired shard iterator is thrown on the first GetRecords() call
         AtomicBoolean firstGetRecordsCall = new AtomicBoolean(true);
@@ -330,11 +353,14 @@ class KinesisStreamProxyTest {
                             GetRecordsRequest.builder()
                                     .streamARN(streamArn)
                                     .shardIterator(secondShardIterator)
+                                    .limit(GET_RECORD_MAX_COUNT)
                                     .build());
                 });
 
         // Then getRecords called with second shard iterator
-        assertThat(kinesisStreamProxy.getRecords(streamArn, shardId, startingPosition))
+        assertThat(
+                        kinesisStreamProxy.getRecords(
+                                streamArn, shardId, startingPosition, GET_RECORD_MAX_COUNT))
                 .isEqualTo(getRecordsResponse);
         assertThat(firstGetRecordsCall.get()).isFalse();
     }
@@ -369,25 +395,31 @@ class KinesisStreamProxyTest {
                         GetRecordsRequest.builder()
                                 .streamARN(streamArn)
                                 .shardIterator(expectedShardIterator)
+                                .limit(GET_RECORD_MAX_COUNT)
                                 .build()));
 
-        KinesisStreamProxy kinesisStreamProxy = new KinesisStreamProxy(testKinesisClient);
+        KinesisStreamProxy kinesisStreamProxy =
+                new KinesisStreamProxy(ignored -> testKinesisClient);
 
         assertThatNoException()
                 .isThrownBy(
-                        () -> kinesisStreamProxy.getRecords(streamArn, shardId, startingPosition));
+                        () ->
+                                kinesisStreamProxy.getRecords(
+                                        streamArn,
+                                        shardId,
+                                        startingPosition,
+                                        GET_RECORD_MAX_COUNT));
     }
 
     @Test
     void testCloseClosesKinesisClient() {
         TestingKinesisClient testKinesisClient = new TestingKinesisClient();
 
-        KinesisStreamProxy kinesisStreamProxy = new KinesisStreamProxy(testKinesisClient);
+        KinesisStreamProxy kinesisStreamProxy =
+                new KinesisStreamProxy(ignored -> testKinesisClient);
 
-        assertThatNoException()
-            .isThrownBy(kinesisStreamProxy::close);
-        assertThat(testKinesisClient.isClosed())
-            .isTrue();
+        assertThatNoException().isThrownBy(kinesisStreamProxy::close);
+        assertThat(testKinesisClient.isClosed()).isTrue();
     }
 
     private List<Shard> getTestShards(final int startShardId, final int endShardId) {

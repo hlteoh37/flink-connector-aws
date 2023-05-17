@@ -89,7 +89,10 @@ public class KinesisStreamProxyProvider {
 
         @Override
         public GetRecordsResponse getRecords(
-                String streamArn, String shardId, StartingPosition startingPosition) {
+                String streamArn,
+                String shardId,
+                StartingPosition startingPosition,
+                int maxRecordsToGet) {
             ShardHandle shardHandle = new ShardHandle(streamArn, shardId);
 
             List<Record> records = null;

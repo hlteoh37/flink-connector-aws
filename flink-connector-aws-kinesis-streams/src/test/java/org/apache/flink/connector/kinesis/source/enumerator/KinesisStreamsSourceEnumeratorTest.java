@@ -73,14 +73,20 @@ class KinesisStreamsSourceEnumeratorTest {
             TestKinesisStreamProxy streamProxy = getTestStreamProxy();
             final Properties consumerConfig = new Properties();
             consumerConfig.setProperty(
-                    KinesisStreamsSourceConfigConstants.STREAM_INITIAL_POSITION, initialPosition.name());
+                    KinesisStreamsSourceConfigConstants.STREAM_INITIAL_POSITION,
+                    initialPosition.name());
             consumerConfig.setProperty(
                     KinesisStreamsSourceConfigConstants.STREAM_INITIAL_TIMESTAMP, initialTimestamp);
 
             // Given enumerator is initialized with no state
             KinesisStreamsSourceEnumerator enumerator =
                     new KinesisStreamsSourceEnumerator(
-                            context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), null);
+                            context,
+                            STREAM_ARN,
+                            consumerConfig,
+                            streamProxy,
+                            ShardAssignerFactory.uniformShardAssigner(),
+                            null);
             // When enumerator starts
             enumerator.start();
             // Then initial discovery scheduled, with periodic discovery after
@@ -168,14 +174,20 @@ class KinesisStreamsSourceEnumeratorTest {
 
             final Properties consumerConfig = new Properties();
             consumerConfig.setProperty(
-                    KinesisStreamsSourceConfigConstants.STREAM_INITIAL_POSITION, initialPosition.name());
+                    KinesisStreamsSourceConfigConstants.STREAM_INITIAL_POSITION,
+                    initialPosition.name());
             consumerConfig.setProperty(
                     KinesisStreamsSourceConfigConstants.STREAM_INITIAL_TIMESTAMP, initialTimestamp);
 
             // Given enumerator is initialised with state
             KinesisStreamsSourceEnumerator enumerator =
                     new KinesisStreamsSourceEnumerator(
-                            context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), state);
+                            context,
+                            STREAM_ARN,
+                            consumerConfig,
+                            streamProxy,
+                            ShardAssignerFactory.uniformShardAssigner(),
+                            state);
             // When enumerator starts
             enumerator.start();
             // Then no initial discovery is scheduled, but a periodic discovery is scheduled
@@ -301,7 +313,12 @@ class KinesisStreamsSourceEnumeratorTest {
             final Properties consumerConfig = new Properties();
             KinesisStreamsSourceEnumerator enumerator =
                     new KinesisStreamsSourceEnumerator(
-                            context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), null);
+                            context,
+                            STREAM_ARN,
+                            consumerConfig,
+                            streamProxy,
+                            ShardAssignerFactory.uniformShardAssigner(),
+                            null);
             enumerator.start();
 
             // Given List Shard request throws an Exception
@@ -325,7 +342,12 @@ class KinesisStreamsSourceEnumeratorTest {
             final Properties consumerConfig = new Properties();
             KinesisStreamsSourceEnumerator enumerator =
                     new KinesisStreamsSourceEnumerator(
-                            context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), null);
+                            context,
+                            STREAM_ARN,
+                            consumerConfig,
+                            streamProxy,
+                            ShardAssignerFactory.uniformShardAssigner(),
+                            null);
             enumerator.start();
 
             // Given enumerator is initialised with one registered reader, with 4 shards in stream
@@ -373,7 +395,12 @@ class KinesisStreamsSourceEnumeratorTest {
             final Properties consumerConfig = new Properties();
             KinesisStreamsSourceEnumerator enumerator =
                     new KinesisStreamsSourceEnumerator(
-                            context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), null);
+                            context,
+                            STREAM_ARN,
+                            consumerConfig,
+                            streamProxy,
+                            ShardAssignerFactory.uniformShardAssigner(),
+                            null);
             enumerator.start();
 
             // Given enumerator is initialised with one registered reader, with 4 shards in stream
@@ -416,7 +443,12 @@ class KinesisStreamsSourceEnumeratorTest {
             final Properties consumerConfig = new Properties();
             KinesisStreamsSourceEnumerator enumerator =
                     new KinesisStreamsSourceEnumerator(
-                            context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), null);
+                            context,
+                            STREAM_ARN,
+                            consumerConfig,
+                            streamProxy,
+                            ShardAssignerFactory.uniformShardAssigner(),
+                            null);
             enumerator.start();
 
             // Given enumerator is initialised without a reader
@@ -471,7 +503,12 @@ class KinesisStreamsSourceEnumeratorTest {
             final Properties consumerConfig = new Properties();
             KinesisStreamsSourceEnumerator enumerator =
                     new KinesisStreamsSourceEnumerator(
-                            context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), null);
+                            context,
+                            STREAM_ARN,
+                            consumerConfig,
+                            streamProxy,
+                            ShardAssignerFactory.uniformShardAssigner(),
+                            null);
             enumerator.start();
 
             // Given enumerator is initialised with one registered reader, with 4 shards in stream
@@ -497,7 +534,7 @@ class KinesisStreamsSourceEnumeratorTest {
                             STREAM_ARN,
                             consumerConfig,
                             streamProxy,
-                        ShardAssignerFactory.uniformShardAssigner(),
+                            ShardAssignerFactory.uniformShardAssigner(),
                             snapshottedState);
             restoredEnumerator.start();
             // Given enumerator is initialised with one registered reader, with 4 shards in stream
@@ -521,7 +558,12 @@ class KinesisStreamsSourceEnumeratorTest {
             final Properties consumerConfig = new Properties();
             KinesisStreamsSourceEnumerator enumerator =
                     new KinesisStreamsSourceEnumerator(
-                            context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), null);
+                            context,
+                            STREAM_ARN,
+                            consumerConfig,
+                            streamProxy,
+                            ShardAssignerFactory.uniformShardAssigner(),
+                            null);
             enumerator.start();
 
             // Given enumerator is initialised with one registered reader, with 4 shards in stream
@@ -553,7 +595,7 @@ class KinesisStreamsSourceEnumeratorTest {
                             STREAM_ARN,
                             consumerConfig,
                             streamProxy,
-                        ShardAssignerFactory.uniformShardAssigner(),
+                            ShardAssignerFactory.uniformShardAssigner(),
                             snapshottedState);
             restoredEnumerator.start();
             // Given enumerator is initialised with one registered reader, with 4 shards in stream
@@ -580,7 +622,12 @@ class KinesisStreamsSourceEnumeratorTest {
             final Properties consumerConfig = new Properties();
             KinesisStreamsSourceEnumerator enumerator =
                     new KinesisStreamsSourceEnumerator(
-                            context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), null);
+                            context,
+                            STREAM_ARN,
+                            consumerConfig,
+                            streamProxy,
+                            ShardAssignerFactory.uniformShardAssigner(),
+                            null);
             enumerator.start();
 
             // Given enumerator is initialised with one registered reader, with 4 shards in stream
@@ -609,7 +656,7 @@ class KinesisStreamsSourceEnumeratorTest {
                             STREAM_ARN,
                             consumerConfig,
                             streamProxy,
-                        ShardAssignerFactory.uniformShardAssigner(),
+                            ShardAssignerFactory.uniformShardAssigner(),
                             snapshottedState);
             restoredEnumerator.start();
             // Given enumerator is initialised with one registered reader, with 4 shards in stream
@@ -637,7 +684,12 @@ class KinesisStreamsSourceEnumeratorTest {
             final Properties consumerConfig = new Properties();
             KinesisStreamsSourceEnumerator enumerator =
                     new KinesisStreamsSourceEnumerator(
-                            context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), null);
+                            context,
+                            STREAM_ARN,
+                            consumerConfig,
+                            streamProxy,
+                            ShardAssignerFactory.uniformShardAssigner(),
+                            null);
 
             assertThatNoException()
                     .isThrownBy(() -> enumerator.handleSourceEvent(1, new SourceEvent() {}));
@@ -652,12 +704,16 @@ class KinesisStreamsSourceEnumeratorTest {
             final Properties consumerConfig = new Properties();
             KinesisStreamsSourceEnumerator enumerator =
                     new KinesisStreamsSourceEnumerator(
-                            context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), null);
+                            context,
+                            STREAM_ARN,
+                            consumerConfig,
+                            streamProxy,
+                            ShardAssignerFactory.uniformShardAssigner(),
+                            null);
             enumerator.start();
 
             assertThatNoException().isThrownBy(enumerator::close);
-            assertThat(streamProxy.isClosed())
-                .isTrue();
+            assertThat(streamProxy.isClosed()).isTrue();
         }
     }
 
@@ -666,7 +722,12 @@ class KinesisStreamsSourceEnumeratorTest {
         final Properties consumerConfig = new Properties();
         KinesisStreamsSourceEnumerator enumerator =
                 new KinesisStreamsSourceEnumerator(
-                        context, STREAM_ARN, consumerConfig, streamProxy, ShardAssignerFactory.uniformShardAssigner(), null);
+                        context,
+                        STREAM_ARN,
+                        consumerConfig,
+                        streamProxy,
+                        ShardAssignerFactory.uniformShardAssigner(),
+                        null);
         enumerator.start();
         assertThat(context.getOneTimeCallables()).hasSize(1);
         assertThat(context.getPeriodicCallables()).hasSize(1);

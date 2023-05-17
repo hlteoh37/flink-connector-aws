@@ -20,6 +20,7 @@ package org.apache.flink.connector.kinesis.source.util;
 
 import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.connector.source.ReaderInfo;
+import org.apache.flink.connector.aws.config.AWSConfigConstants;
 import org.apache.flink.connector.kinesis.source.split.KinesisShardSplit;
 import org.apache.flink.connector.kinesis.source.split.KinesisShardSplitState;
 import org.apache.flink.connector.kinesis.source.split.StartingPosition;
@@ -28,6 +29,7 @@ import software.amazon.awssdk.core.SdkBytes;
 import software.amazon.awssdk.services.kinesis.model.Record;
 
 import java.time.Instant;
+import java.util.Properties;
 
 /** Utilities class for testing Kinesis Source. */
 public class TestUtil {
@@ -74,5 +76,15 @@ public class TestUtil {
                 .data(SdkBytes.fromByteArray(STRING_SCHEMA.serialize(data)))
                 .approximateArrivalTimestamp(Instant.now())
                 .build();
+    }
+
+    /** Get standard Kinesis-related config properties. */
+    public static Properties getStandardProperties() {
+        Properties config = new Properties();
+        config.setProperty(AWSConfigConstants.AWS_REGION, "us-east-1");
+        config.setProperty(AWSConfigConstants.AWS_ACCESS_KEY_ID, "accessKeyId");
+        config.setProperty(AWSConfigConstants.AWS_SECRET_ACCESS_KEY, "secretKey");
+
+        return config;
     }
 }

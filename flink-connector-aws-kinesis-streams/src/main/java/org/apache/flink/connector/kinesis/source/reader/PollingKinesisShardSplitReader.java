@@ -29,6 +29,8 @@ import org.apache.flink.connector.kinesis.source.split.StartingPosition;
 
 import org.apache.flink.shaded.guava30.com.google.common.collect.ImmutableSet;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.kinesis.model.GetRecordsResponse;
 import software.amazon.awssdk.services.kinesis.model.Record;
 
@@ -39,6 +41,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.Properties;
 import java.util.Set;
 
 /**
@@ -47,15 +50,21 @@ import java.util.Set;
  */
 @Internal
 public class PollingKinesisShardSplitReader implements SplitReader<Record, KinesisShardSplit> {
+    private static final Logger LOG = LoggerFactory.getLogger(PollingKinesisShardSplitReader.class);
 
     private static final RecordsWithSplitIds<Record> INCOMPLETE_SHARD_EMPTY_RECORDS =
             new KinesisRecordsWithSplitIds(Collections.emptyIterator(), null, false);
 
     private final StreamProxy kinesis;
     private final Deque<KinesisShardSplitState> assignedSplits = new ArrayDeque<>();
+    private final PollingKinesisShardSplitReaderConfiguration
+            pollingKinesisShardSplitReaderConfiguration;
 
-    public PollingKinesisShardSplitReader(StreamProxy kinesisProxy) {
+    public PollingKinesisShardSplitReader(
+            StreamProxy kinesisProxy, final Properties consumerConfig) {
         this.kinesis = kinesisProxy;
+        this.pollingKinesisShardSplitReaderConfiguration =
+                new PollingKinesisShardSplitReaderConfiguration(consumerConfig);
     }
 
     @Override
@@ -69,7 +78,10 @@ public class PollingKinesisShardSplitReader implements SplitReader<Record, Kines
                 kinesis.getRecords(
                         splitState.getStreamArn(),
                         splitState.getShardId(),
-                        splitState.getNextStartingPosition());
+                        splitState.getNextStartingPosition(),
+                        pollingKinesisShardSplitReaderConfiguration
+                                .getMaxNumberOfRecordsPerFetch());
+
         boolean isComplete = getRecordsResponse.nextShardIterator() == null;
 
         if (hasNoRecords(getRecordsResponse)) {

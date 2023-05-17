@@ -21,6 +21,7 @@ package org.apache.flink.connector.kinesis.source.util;
 import software.amazon.awssdk.awscore.exception.AwsServiceException;
 import software.amazon.awssdk.core.exception.SdkClientException;
 import software.amazon.awssdk.services.kinesis.KinesisClient;
+import software.amazon.awssdk.services.kinesis.KinesisServiceClientConfiguration;
 import software.amazon.awssdk.services.kinesis.model.AccessDeniedException;
 import software.amazon.awssdk.services.kinesis.model.ExpiredIteratorException;
 import software.amazon.awssdk.services.kinesis.model.ExpiredNextTokenException;
@@ -133,6 +134,12 @@ public class KinesisClientProvider {
                         KinesisException {
             getRecordsValidation.accept(getRecordsRequest);
             return getRecordsResponse;
+        }
+
+        @Override
+        public KinesisServiceClientConfiguration serviceClientConfiguration() {
+            // This is not used
+            return null;
         }
     }
 

@@ -30,6 +30,7 @@ import software.amazon.awssdk.core.client.config.ClientOverrideConfiguration;
 import software.amazon.awssdk.core.client.config.SdkAdvancedClientOption;
 import software.amazon.awssdk.core.client.config.SdkClientConfiguration;
 import software.amazon.awssdk.core.client.config.SdkClientOption;
+import software.amazon.awssdk.core.retry.RetryPolicy;
 import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 
@@ -128,6 +129,17 @@ public class AWSClientUtil extends AWSGeneralUtil {
             final ClientOverrideConfiguration.Builder overrideConfigurationBuilder,
             String flinkUserAgentPrefix) {
 
+        return createClientOverrideConfiguration(
+                config, overrideConfigurationBuilder, flinkUserAgentPrefix, null);
+    }
+
+    @VisibleForTesting
+    static ClientOverrideConfiguration createClientOverrideConfiguration(
+            final SdkClientConfiguration config,
+            final ClientOverrideConfiguration.Builder overrideConfigurationBuilder,
+            String flinkUserAgentPrefix,
+            final RetryPolicy retryPolicy) {
+
         overrideConfigurationBuilder
                 .putAdvancedOption(SdkAdvancedClientOption.USER_AGENT_PREFIX, flinkUserAgentPrefix)
                 .putAdvancedOption(
@@ -139,6 +151,8 @@ public class AWSClientUtil extends AWSGeneralUtil {
 
         Optional.ofNullable(config.option(SdkClientOption.API_CALL_TIMEOUT))
                 .ifPresent(overrideConfigurationBuilder::apiCallTimeout);
+
+        Optional.ofNullable(retryPolicy).ifPresent(overrideConfigurationBuilder::retryPolicy);
 
         return overrideConfigurationBuilder.build();
     }
@@ -184,7 +198,8 @@ public class AWSClientUtil extends AWSGeneralUtil {
                     final SdkHttpClient httpClient,
                     final T clientBuilder,
                     final String awsUserAgentPrefixFormat,
-                    final String awsClientUserAgentPrefix) {
+                    final String awsClientUserAgentPrefix,
+                    final RetryPolicy retryPolicy) {
         SdkClientConfiguration clientConfiguration = SdkClientConfiguration.builder().build();
 
         String flinkUserAgentPrefix =
@@ -195,7 +210,8 @@ public class AWSClientUtil extends AWSGeneralUtil {
                 createClientOverrideConfiguration(
                         clientConfiguration,
                         ClientOverrideConfiguration.builder(),
-                        flinkUserAgentPrefix);
+                        flinkUserAgentPrefix,
+                        retryPolicy);
 
         updateEndpointOverride(configProps, clientBuilder);
 
@@ -205,6 +221,25 @@ public class AWSClientUtil extends AWSGeneralUtil {
                 .credentialsProvider(getCredentialsProvider(configProps))
                 .region(getRegion(configProps))
                 .build();
+    }
+
+    public static <
+                    S extends SdkClient,
+                    T extends
+                            AwsSyncClientBuilder<? extends T, S> & AwsClientBuilder<? extends T, S>>
+            S createAwsSyncClient(
+                    final Properties configProps,
+                    final SdkHttpClient httpClient,
+                    final T clientBuilder,
+                    final String awsUserAgentPrefixFormat,
+                    final String awsClientUserAgentPrefix) {
+        return createAwsSyncClient(
+                configProps,
+                httpClient,
+                clientBuilder,
+                awsUserAgentPrefixFormat,
+                awsClientUserAgentPrefix,
+                null);
     }
 
     private static String getFlinkUserAgentPrefix(

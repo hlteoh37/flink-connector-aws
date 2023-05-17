@@ -41,7 +41,9 @@ class KinesisStreamsSourceConfigUtilTest {
         Properties consumerProperties = new Properties();
         consumerProperties.setProperty(STREAM_INITIAL_TIMESTAMP, timestamp);
 
-        assertThat(KinesisStreamsSourceConfigUtil.parseStreamTimestampStartingPosition(consumerProperties))
+        assertThat(
+                        KinesisStreamsSourceConfigUtil.parseStreamTimestampStartingPosition(
+                                consumerProperties))
                 .isEqualTo(expectedTimestamp);
     }
 
@@ -55,7 +57,9 @@ class KinesisStreamsSourceConfigUtilTest {
         consumerProperties.setProperty(STREAM_INITIAL_TIMESTAMP, timestamp);
         consumerProperties.setProperty(STREAM_TIMESTAMP_DATE_FORMAT, format);
 
-        assertThat(KinesisStreamsSourceConfigUtil.parseStreamTimestampStartingPosition(consumerProperties))
+        assertThat(
+                        KinesisStreamsSourceConfigUtil.parseStreamTimestampStartingPosition(
+                                consumerProperties))
                 .isEqualTo(expectedTimestamp);
     }
 
@@ -67,7 +71,9 @@ class KinesisStreamsSourceConfigUtilTest {
         Properties consumerProperties = new Properties();
         consumerProperties.setProperty(STREAM_INITIAL_TIMESTAMP, String.valueOf(epoch));
 
-        assertThat(KinesisStreamsSourceConfigUtil.parseStreamTimestampStartingPosition(consumerProperties))
+        assertThat(
+                        KinesisStreamsSourceConfigUtil.parseStreamTimestampStartingPosition(
+                                consumerProperties))
                 .isEqualTo(expectedTimestamp);
     }
 

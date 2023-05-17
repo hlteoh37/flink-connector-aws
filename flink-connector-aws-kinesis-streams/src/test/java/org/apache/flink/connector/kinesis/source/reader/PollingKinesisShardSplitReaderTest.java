@@ -33,6 +33,7 @@ import software.amazon.awssdk.services.kinesis.model.Record;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Properties;
 
 import static org.apache.flink.connector.kinesis.source.util.KinesisStreamProxyProvider.getTestStreamProxy;
 import static org.apache.flink.connector.kinesis.source.util.TestUtil.generateShardId;
@@ -46,7 +47,7 @@ class PollingKinesisShardSplitReaderTest {
     void testNoAssignedSplitsHandledGracefully() throws Exception {
         StreamProxy testStreamProxy = getTestStreamProxy();
         PollingKinesisShardSplitReader splitReader =
-                new PollingKinesisShardSplitReader(testStreamProxy);
+                new PollingKinesisShardSplitReader(testStreamProxy, new Properties());
 
         RecordsWithSplitIds<Record> retrievedRecords = splitReader.fetch();
 
@@ -59,7 +60,7 @@ class PollingKinesisShardSplitReaderTest {
     void testAssignedSplitHasNoRecordsHandledGracefully() throws Exception {
         TestKinesisStreamProxy testStreamProxy = getTestStreamProxy();
         PollingKinesisShardSplitReader splitReader =
-                new PollingKinesisShardSplitReader(testStreamProxy);
+                new PollingKinesisShardSplitReader(testStreamProxy, new Properties());
 
         // Given assigned split with no records
         String shardId = generateShardId(1);
@@ -80,7 +81,7 @@ class PollingKinesisShardSplitReaderTest {
     void testSingleAssignedSplitAllConsumed() throws Exception {
         TestKinesisStreamProxy testStreamProxy = getTestStreamProxy();
         PollingKinesisShardSplitReader splitReader =
-                new PollingKinesisShardSplitReader(testStreamProxy);
+                new PollingKinesisShardSplitReader(testStreamProxy, new Properties());
 
         // Given assigned split with records
         String shardId = generateShardId(1);
@@ -111,7 +112,7 @@ class PollingKinesisShardSplitReaderTest {
     void testMultipleAssignedSplitsAllConsumed() throws Exception {
         TestKinesisStreamProxy testStreamProxy = getTestStreamProxy();
         PollingKinesisShardSplitReader splitReader =
-                new PollingKinesisShardSplitReader(testStreamProxy);
+                new PollingKinesisShardSplitReader(testStreamProxy, new Properties());
 
         // Given assigned split with records
         String shardId = generateShardId(1);
@@ -143,7 +144,7 @@ class PollingKinesisShardSplitReaderTest {
     void testHandleEmptyCompletedShard() throws Exception {
         TestKinesisStreamProxy testStreamProxy = getTestStreamProxy();
         PollingKinesisShardSplitReader splitReader =
-                new PollingKinesisShardSplitReader(testStreamProxy);
+                new PollingKinesisShardSplitReader(testStreamProxy, new Properties());
 
         // Given assigned split with no records, and the shard is complete
         String shardId = generateShardId(1);
@@ -166,7 +167,7 @@ class PollingKinesisShardSplitReaderTest {
     void testFinishedSplitsReturned() throws Exception {
         TestKinesisStreamProxy testStreamProxy = getTestStreamProxy();
         PollingKinesisShardSplitReader splitReader =
-                new PollingKinesisShardSplitReader(testStreamProxy);
+                new PollingKinesisShardSplitReader(testStreamProxy, new Properties());
 
         // Given assigned split with records from completed shard
         String shardId = generateShardId(1);
@@ -199,7 +200,7 @@ class PollingKinesisShardSplitReaderTest {
     void testWakeUpIsNoOp() {
         TestKinesisStreamProxy testStreamProxy = getTestStreamProxy();
         PollingKinesisShardSplitReader splitReader =
-                new PollingKinesisShardSplitReader(testStreamProxy);
+                new PollingKinesisShardSplitReader(testStreamProxy, new Properties());
 
         assertThatNoException().isThrownBy(splitReader::wakeUp);
     }
@@ -208,7 +209,7 @@ class PollingKinesisShardSplitReaderTest {
     void testCloseIsNoOp() {
         TestKinesisStreamProxy testStreamProxy = getTestStreamProxy();
         PollingKinesisShardSplitReader splitReader =
-                new PollingKinesisShardSplitReader(testStreamProxy);
+                new PollingKinesisShardSplitReader(testStreamProxy, new Properties());
 
         assertThatNoException().isThrownBy(splitReader::close);
     }

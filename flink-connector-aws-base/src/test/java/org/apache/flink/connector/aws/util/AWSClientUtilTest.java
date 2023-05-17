@@ -99,7 +99,8 @@ class AWSClientUtilTest {
                 clientConfiguration,
                 builder,
                 formatFlinkUserAgentPrefix(
-                        DEFAULT_USER_AGENT_PREFIX_FORMAT + AWSClientUtil.V2_USER_AGENT_SUFFIX));
+                        DEFAULT_USER_AGENT_PREFIX_FORMAT + AWSClientUtil.V2_USER_AGENT_SUFFIX),
+                null);
 
         verify(builder).build();
         verify(builder)
