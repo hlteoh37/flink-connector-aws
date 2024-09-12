@@ -19,7 +19,6 @@
 package org.apache.flink.connector.kinesis.source.config;
 
 import org.apache.flink.annotation.Experimental;
-import org.apache.flink.annotation.PublicEvolving;
 import org.apache.flink.configuration.ConfigOption;
 import org.apache.flink.configuration.ConfigOptions;
 import org.apache.flink.connector.aws.config.AWSConfigOptions;
@@ -28,13 +27,23 @@ import java.time.Duration;
 
 /** Constants to be used with the KinesisStreamsSource. */
 @Experimental
-@PublicEvolving
-public class KinesisSourceConfigOptions extends AWSConfigOptions {
+public class KinesisStreamsSourceConfigConstants {
     /** Marks the initial position to use when reading from the Kinesis stream. */
     public enum InitialPosition {
         LATEST,
         TRIM_HORIZON,
         AT_TIMESTAMP
+    }
+
+    /** Defines mechanism used to consume records from Kinesis stream. */
+    public enum ReaderType {
+        POLLING,
+        EFO
+    }
+
+    public enum EfoConsumerRegistrationStrategy {
+        EAGER,
+        NONE
     }
 
     public static final ConfigOption<InitialPosition> STREAM_INITIAL_POSITION =
@@ -69,4 +78,26 @@ public class KinesisSourceConfigOptions extends AWSConfigOptions {
                     .defaultValue(10000)
                     .withDescription(
                             "The maximum number of records to try to get each time we fetch records from a AWS Kinesis shard");
+
+    public static final ConfigOption<ReaderType> READER_TYPE =
+            ConfigOptions.key("kinesis.stream.reader.type")
+                    .enumType(ReaderType.class)
+                    .defaultValue(ReaderType.POLLING)
+                    .withDescription("The type of reader used to read from the Kinesis stream.");
+
+    public static final ConfigOption<EfoConsumerRegistrationStrategy> EFO_CONSUMER_REGISTRATION_STRATEGY =
+            ConfigOptions.key("efo.consumer.registration.type")
+                    .enumType(EfoConsumerRegistrationStrategy.class)
+                    .defaultValue(EfoConsumerRegistrationStrategy.EAGER)
+                    .withDescription("Strategy used for EFO consumer registration. If EAGER is selected, consumer with specified name will be registered if it doesn't exist.");
+
+    public static final ConfigOption<String> EFO_CONSUMER_NAME =
+            ConfigOptions.key("efo.consumer.name")
+                    .stringType()
+                    .noDefaultValue();
+
+    public static final ConfigOption<String> EFO_CONSUMER_ARN =
+            ConfigOptions.key("efo.consumer.arn")
+                    .stringType()
+                    .noDefaultValue();
 }
