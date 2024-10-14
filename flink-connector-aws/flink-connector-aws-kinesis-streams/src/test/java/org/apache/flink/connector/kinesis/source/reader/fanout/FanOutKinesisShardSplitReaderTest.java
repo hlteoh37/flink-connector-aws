@@ -24,8 +24,6 @@ import org.apache.flink.connector.base.source.reader.splitreader.SplitsAddition;
 import org.apache.flink.connector.kinesis.source.metrics.KinesisShardMetrics;
 import org.apache.flink.connector.kinesis.source.proxy.AsyncStreamProxy;
 import org.apache.flink.connector.kinesis.source.split.KinesisShardSplit;
-import org.apache.flink.connector.kinesis.source.util.FakeKinesisFanOutBehaviorsFactory;
-import org.apache.flink.connector.kinesis.source.util.FakeKinesisFanOutBehaviorsFactory.TrackCloseStreamProxy;
 import org.apache.flink.connector.kinesis.source.util.TestUtil;
 import org.apache.flink.metrics.testutils.MetricListener;
 
@@ -47,6 +45,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatNoException
 import static org.assertj.core.api.AssertionsForInterfaceTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 
+/** Test for {@link FanOutKinesisShardSplitReader}. */
 public class FanOutKinesisShardSplitReaderTest {
     private static final String TEST_SHARD_ID = TestUtil.generateShardId(1);
 
@@ -56,16 +55,16 @@ public class FanOutKinesisShardSplitReaderTest {
     private Map<String, KinesisShardMetrics> shardMetricGroupMap;
     private MetricListener metricListener;
 
-
-
     @BeforeEach
     public void init() {
         metricListener = new MetricListener();
 
         shardMetricGroupMap = new ConcurrentHashMap<>();
-        shardMetricGroupMap.put(TEST_SHARD_ID, new KinesisShardMetrics(getTestSplit(TEST_SHARD_ID), metricListener.getMetricGroup()));
+        shardMetricGroupMap.put(
+                TEST_SHARD_ID,
+                new KinesisShardMetrics(
+                        getTestSplit(TEST_SHARD_ID), metricListener.getMetricGroup()));
     }
-
 
     @Test
     public void testNoAssignedSplitsHandledGracefully() throws Exception {
@@ -74,14 +73,15 @@ public class FanOutKinesisShardSplitReaderTest {
         assertThat(retrievedRecords.nextRecordFromSplit()).isNull();
         assertThat(retrievedRecords.nextSplit()).isNull();
         assertThat(retrievedRecords.finishedSplits()).isEmpty();
-
     }
 
     @Test
     public void testAssignedSplitHasNoRecordsHandledGracefully() throws Exception {
         // Given assigned split with no records
         testAsyncStreamProxy = FakeKinesisFanOutBehaviorsFactory.boundedShard().build();
-        splitReader = new FanOutKinesisShardSplitReader(testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+        splitReader =
+                new FanOutKinesisShardSplitReader(
+                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
 
@@ -97,8 +97,11 @@ public class FanOutKinesisShardSplitReaderTest {
     @Test
     public void testSplitWithExpiredShardHandledAsCompleted() throws Exception {
         // Given Kinesis will respond with expired shard
-        testAsyncStreamProxy = FakeKinesisFanOutBehaviorsFactory.resourceNotFoundWhenObtainingSubscription();
-        splitReader = new FanOutKinesisShardSplitReader(testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+        testAsyncStreamProxy =
+                FakeKinesisFanOutBehaviorsFactory.resourceNotFoundWhenObtainingSubscription();
+        splitReader =
+                new FanOutKinesisShardSplitReader(
+                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
 
@@ -115,11 +118,14 @@ public class FanOutKinesisShardSplitReaderTest {
     @Test
     public void testSingleAssignedSplitAllConsumed() throws Exception {
         // Given Kinesis configured with single shard
-        testAsyncStreamProxy = FakeKinesisFanOutBehaviorsFactory.boundedShard()
-                .withBatchCount(10)
-                .withRecordsPerBatch(5)
-                .build();
-        splitReader = new FanOutKinesisShardSplitReader(testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+        testAsyncStreamProxy =
+                FakeKinesisFanOutBehaviorsFactory.boundedShard()
+                        .withBatchCount(10)
+                        .withRecordsPerBatch(5)
+                        .build();
+        splitReader =
+                new FanOutKinesisShardSplitReader(
+                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
 
@@ -131,10 +137,11 @@ public class FanOutKinesisShardSplitReaderTest {
     @Test
     public void testHandleEmptyCompletedShard() {
         // Given empty shard that has been completed
-        testAsyncStreamProxy = FakeKinesisFanOutBehaviorsFactory.boundedShard()
-                .withBatchCount(0)
-                .build();
-        splitReader = new FanOutKinesisShardSplitReader(testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+        testAsyncStreamProxy =
+                FakeKinesisFanOutBehaviorsFactory.boundedShard().withBatchCount(0).build();
+        splitReader =
+                new FanOutKinesisShardSplitReader(
+                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
 
@@ -156,17 +163,17 @@ public class FanOutKinesisShardSplitReaderTest {
                     // Check that the shard has been consumed completely
                     assertThat(retrievedRecords.finishedSplits()).containsExactly(TEST_SHARD_ID);
                 },
-                "did not complete reading from shard within 10 seconds."
-        );
+                "did not complete reading from shard within 10 seconds.");
     }
 
     @Test
     public void testFinishedSplitsReturned() {
         // Given empty shard that has been completed
-        testAsyncStreamProxy = FakeKinesisFanOutBehaviorsFactory.boundedShard()
-                .withBatchCount(0)
-                .build();
-        splitReader = new FanOutKinesisShardSplitReader(testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+        testAsyncStreamProxy =
+                FakeKinesisFanOutBehaviorsFactory.boundedShard().withBatchCount(0).build();
+        splitReader =
+                new FanOutKinesisShardSplitReader(
+                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
 
@@ -188,13 +195,14 @@ public class FanOutKinesisShardSplitReaderTest {
                     // Check that the shard has been consumed completely
                     assertThat(retrievedRecords.finishedSplits()).containsExactly(TEST_SHARD_ID);
                 },
-                "did not complete reading from shard within 10 seconds."
-        );
+                "did not complete reading from shard within 10 seconds.");
     }
 
     @Test
     public void testWakeUpIsNoOp() {
-        splitReader = new FanOutKinesisShardSplitReader(testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+        splitReader =
+                new FanOutKinesisShardSplitReader(
+                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
 
         // When wakeup is called
         // Then no exception is thrown and no-op
@@ -205,14 +213,16 @@ public class FanOutKinesisShardSplitReaderTest {
     public void testPauseOrResumeAllSplits() throws Exception {
         // Given Kinesis configured with single shard
         // Configured with 10 x 5 records.
-        testAsyncStreamProxy = FakeKinesisFanOutBehaviorsFactory.boundedShard()
-                .withBatchCount(10)
-                .withRecordsPerBatch(5)
-                .build();
-        splitReader = new FanOutKinesisShardSplitReader(testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+        testAsyncStreamProxy =
+                FakeKinesisFanOutBehaviorsFactory.boundedShard()
+                        .withBatchCount(10)
+                        .withRecordsPerBatch(5)
+                        .build();
+        splitReader =
+                new FanOutKinesisShardSplitReader(
+                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
         KinesisShardSplit testSplit = getTestSplit(TEST_SHARD_ID);
-        splitReader.handleSplitsChanges(
-                new SplitsAddition<>(Collections.singletonList(testSplit)));
+        splitReader.handleSplitsChanges(new SplitsAddition<>(Collections.singletonList(testSplit)));
 
         // When consume all records
         // Then we consume 25 records
@@ -220,12 +230,14 @@ public class FanOutKinesisShardSplitReaderTest {
 
         // When we pause a different split
         KinesisShardSplit differentTestSplit = getTestSplit(generateShardId(999));
-        splitReader.pauseOrResumeSplits(Collections.singletonList(differentTestSplit), Collections.emptyList());
+        splitReader.pauseOrResumeSplits(
+                Collections.singletonList(differentTestSplit), Collections.emptyList());
         // Then we can continue consuming records
         consumeSomeRecordsFromKinesis(splitReader, 5);
 
         // When we pause the target split
-        splitReader.pauseOrResumeSplits(Collections.singletonList(testSplit), Collections.emptyList());
+        splitReader.pauseOrResumeSplits(
+                Collections.singletonList(testSplit), Collections.emptyList());
         // Then we cannot continue consuming records.
         for (int i = 0; i < 10; i++) {
             RecordsWithSplitIds<Record> retrievedRecords = splitReader.fetch();
@@ -234,7 +246,8 @@ public class FanOutKinesisShardSplitReaderTest {
         }
 
         // When we resume the target split
-        splitReader.pauseOrResumeSplits(Collections.emptyList(), Collections.singletonList(testSplit));
+        splitReader.pauseOrResumeSplits(
+                Collections.emptyList(), Collections.singletonList(testSplit));
         // Then we continue consuming remaining records
         consumeAllRecordsFromKinesis(splitReader, 20);
     }
@@ -242,8 +255,11 @@ public class FanOutKinesisShardSplitReaderTest {
     @Test
     public void testCloseClosesStreamProxy() throws Exception {
         // Given stream proxy
-        TrackCloseStreamProxy trackCloseStreamProxy = FakeKinesisFanOutBehaviorsFactory.testCloseStreamProxy();
-        splitReader = new FanOutKinesisShardSplitReader(trackCloseStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+        TrackCloseStreamProxy trackCloseStreamProxy =
+                FakeKinesisFanOutBehaviorsFactory.testCloseStreamProxy();
+        splitReader =
+                new FanOutKinesisShardSplitReader(
+                        trackCloseStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
 
         // When split reader is not closed
         // Then stream proxy is still open
@@ -264,12 +280,15 @@ public class FanOutKinesisShardSplitReaderTest {
         TestUtil.assertMillisBehindLatest(testSplit, -1L, metricListener);
 
         // When split is consumed
-        testAsyncStreamProxy = FakeKinesisFanOutBehaviorsFactory.boundedShard()
-                .withBatchCount(1)
-                .withRecordsPerBatch(5)
-                .withMillisBehindLatest(1234L)
-                .build();
-        splitReader = new FanOutKinesisShardSplitReader(testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+        testAsyncStreamProxy =
+                FakeKinesisFanOutBehaviorsFactory.boundedShard()
+                        .withBatchCount(1)
+                        .withRecordsPerBatch(5)
+                        .withMillisBehindLatest(1234L)
+                        .build();
+        splitReader =
+                new FanOutKinesisShardSplitReader(
+                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
         consumeAllRecordsFromKinesis(splitReader, 5);
@@ -278,16 +297,20 @@ public class FanOutKinesisShardSplitReaderTest {
         TestUtil.assertMillisBehindLatest(testSplit, 1234L, metricListener);
     }
 
-
-    private void consumeAllRecordsFromKinesis(SplitReader<Record, KinesisShardSplit> splitReader, int numRecords) {
+    private void consumeAllRecordsFromKinesis(
+            SplitReader<Record, KinesisShardSplit> splitReader, int numRecords) {
         consumeRecordsFromKinesis(splitReader, numRecords, true);
     }
 
-    private void consumeSomeRecordsFromKinesis(SplitReader<Record, KinesisShardSplit> splitReader, int numRecords) {
+    private void consumeSomeRecordsFromKinesis(
+            SplitReader<Record, KinesisShardSplit> splitReader, int numRecords) {
         consumeRecordsFromKinesis(splitReader, numRecords, false);
     }
 
-    private void consumeRecordsFromKinesis(SplitReader<Record, KinesisShardSplit> splitReader, int numRecords, boolean checkForShardCompletion) {
+    private void consumeRecordsFromKinesis(
+            SplitReader<Record, KinesisShardSplit> splitReader,
+            int numRecords,
+            boolean checkForShardCompletion) {
         // Set timeout to prevent infinite loop on failure
         assertTimeoutPreemptively(
                 Duration.ofSeconds(10),
@@ -303,16 +326,14 @@ public class FanOutKinesisShardSplitReaderTest {
                     assertThat(retrievedRecords).isNotNull();
                     // Check that the shard has been consumed completely
                     if (checkForShardCompletion) {
-                        assertThat(retrievedRecords.finishedSplits()).containsExactly(TEST_SHARD_ID);
+                        assertThat(retrievedRecords.finishedSplits())
+                                .containsExactly(TEST_SHARD_ID);
                     } else {
                         assertThat(retrievedRecords.finishedSplits()).isEmpty();
                     }
                 },
-                "did not expected " + numRecords + " records within 10 seconds."
-        );
+                "did not expected " + numRecords + " records within 10 seconds.");
     }
-
-
 
     private List<Record> readAllRecords(RecordsWithSplitIds<Record> recordsWithSplitIds) {
         List<Record> outputRecords = new ArrayList<>();

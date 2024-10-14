@@ -22,6 +22,7 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.kinesis.source.exception.KinesisStreamsSourceException;
 import org.apache.flink.connector.kinesis.source.proxy.AsyncStreamProxy;
 import org.apache.flink.connector.kinesis.source.split.StartingPosition;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEvent;
@@ -116,7 +117,6 @@ class FanOutKinesisShardSubscription {
     public SubscribeToShardEvent nextEvent() {
         // TODO handle race conditions between nextEvent and
 
-
         if (subscriber == null) {
             activateSubscription();
             return null;
@@ -129,12 +129,21 @@ class FanOutKinesisShardSubscription {
         }
 
         if (subscriber.isFailed()) {
-            subscriber.getFailure().map((failure) -> {
-                LOG.error("Subscription encountered unrecoverable exception.", failure);
-                throw new KinesisStreamsSourceException(
-                        "Subscription encountered unrecoverable exception.", failure);
-            }).orElseThrow(() -> new KinesisStreamsSourceException(
-                    "Subscription encountered unexpected failure.", null));
+            subscriber
+                    .getFailure()
+                    .map(
+                            (failure) -> {
+                                LOG.error(
+                                        "Subscription encountered unrecoverable exception.",
+                                        failure);
+                                throw new KinesisStreamsSourceException(
+                                        "Subscription encountered unrecoverable exception.",
+                                        failure);
+                            })
+                    .orElseThrow(
+                            () ->
+                                    new KinesisStreamsSourceException(
+                                            "Subscription encountered unexpected failure.", null));
         }
 
         if (!subscriber.isSubscribed()) {
@@ -164,5 +173,4 @@ class FanOutKinesisShardSubscription {
 
         return null;
     }
-
 }

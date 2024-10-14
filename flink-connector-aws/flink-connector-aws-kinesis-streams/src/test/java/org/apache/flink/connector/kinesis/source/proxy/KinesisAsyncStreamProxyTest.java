@@ -56,33 +56,33 @@ class KinesisAsyncStreamProxyTest {
 
     @ParameterizedTest
     @MethodSource("provideSubscribeToShardStartingPosition")
-    public void testSubscribeToShard(final String shardId, final StartingPosition startingPosition) {
+    public void testSubscribeToShard(
+            final String shardId, final StartingPosition startingPosition) {
         // Given subscription arguments
-        SubscribeToShardResponseHandler noOpResponseHandler = SubscribeToShardResponseHandler.builder()
-                .subscriber(event -> {
-                })
-                .onError(throwable -> {
-                })
-                .onComplete(() -> {
-                })
-                .build();
+        SubscribeToShardResponseHandler noOpResponseHandler =
+                SubscribeToShardResponseHandler.builder()
+                        .subscriber(event -> {})
+                        .onError(throwable -> {})
+                        .onComplete(() -> {})
+                        .build();
 
         // When proxy is invoked
-        CompletableFuture<Void> result = kinesisAsyncStreamProxy.subscribeToShard(CONSUMER_ARN, shardId, startingPosition, noOpResponseHandler);
+        CompletableFuture<Void> result =
+                kinesisAsyncStreamProxy.subscribeToShard(
+                        CONSUMER_ARN, shardId, startingPosition, noOpResponseHandler);
 
         // Then correct request is passed through to the Kinesis client
-        SubscribeToShardRequest expectedRequest = SubscribeToShardRequest.builder()
-                .consumerARN(CONSUMER_ARN)
-                .shardId(shardId)
-                .startingPosition(startingPosition.getSdkStartingPosition())
-                .build();
+        SubscribeToShardRequest expectedRequest =
+                SubscribeToShardRequest.builder()
+                        .consumerARN(CONSUMER_ARN)
+                        .shardId(shardId)
+                        .startingPosition(startingPosition.getSdkStartingPosition())
+                        .build();
         assertThat(result).isEqualTo(SUBSCRIBE_TO_SHARD_RESPONSE_FUTURE);
-        assertThat(testKinesisClient.getSubscribeToShardRequest())
-                .isEqualTo(expectedRequest);
+        assertThat(testKinesisClient.getSubscribeToShardRequest()).isEqualTo(expectedRequest);
         assertThat(testKinesisClient.getSubscribeToShardResponseHandler())
                 .isEqualTo(noOpResponseHandler);
     }
-
 
     private static Stream<Arguments> provideSubscribeToShardStartingPosition() {
         return Stream.of(
@@ -91,7 +91,8 @@ class KinesisAsyncStreamProxyTest {
                 Arguments.of(generateShardId(1), StartingPosition.fromStart()),
                 // Check all starting positions
                 Arguments.of(generateShardId(0), StartingPosition.fromTimestamp(Instant.now())),
-                Arguments.of(generateShardId(0), StartingPosition.continueFromSequenceNumber("seq-num")));
+                Arguments.of(
+                        generateShardId(0),
+                        StartingPosition.continueFromSequenceNumber("seq-num")));
     }
-
 }

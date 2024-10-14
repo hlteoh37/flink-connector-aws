@@ -70,8 +70,8 @@ import software.amazon.awssdk.services.kinesis.model.DescribeStreamConsumerRespo
 import software.amazon.awssdk.services.kinesis.model.Record;
 import software.amazon.awssdk.utils.AttributeMap;
 
-import java.time.Duration;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
@@ -221,7 +221,7 @@ public class KinesisStreamsSource<T>
         // lifecycle.
         return () ->
                 new PollingKinesisShardSplitReader(
-                        createKinesisStreamProxy(sourceConfig), shardMetricGroupMap);
+                        createKinesisStreamProxy(sourceConfig), shardMetricGroupMap, sourceConfig);
     }
 
     private Supplier<SplitReader<Record, KinesisShardSplit>>

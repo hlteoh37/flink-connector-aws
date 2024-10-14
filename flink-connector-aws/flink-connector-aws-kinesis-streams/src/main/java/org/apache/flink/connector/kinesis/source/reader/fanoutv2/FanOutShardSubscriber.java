@@ -2,6 +2,7 @@ package org.apache.flink.connector.kinesis.source.reader.fanoutv2;
 
 import org.apache.flink.connector.kinesis.source.reader.fanout.FanOutKinesisShardSubscription;
 import org.apache.flink.connector.kinesis.source.split.StartingPosition;
+
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
@@ -89,7 +90,8 @@ class FanOutShardSubscriber implements Subscriber<SubscribeToShardEventStream> {
                 new SubscribeToShardResponseHandler.Visitor() {
                     @Override
                     public void visit(SubscribeToShardEvent event) {
-                        LOG.debug("Received event: {}, {}", event.getClass().getSimpleName(), event);
+                        LOG.debug(
+                                "Received event: {}, {}", event.getClass().getSimpleName(), event);
                         eventQueue.add(event);
                     }
                 });
@@ -114,5 +116,4 @@ class FanOutShardSubscriber implements Subscriber<SubscribeToShardEventStream> {
         }
         return event;
     }
-    
 }
