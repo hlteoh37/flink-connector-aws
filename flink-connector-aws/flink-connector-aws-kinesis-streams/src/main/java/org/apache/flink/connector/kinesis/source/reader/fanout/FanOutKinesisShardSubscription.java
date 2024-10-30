@@ -22,11 +22,14 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.kinesis.source.exception.KinesisStreamsSourceException;
 import org.apache.flink.connector.kinesis.source.proxy.AsyncStreamProxy;
 import org.apache.flink.connector.kinesis.source.split.StartingPosition;
+import org.apache.flink.util.ExceptionUtils;
 
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.kinesis.model.ResourceInUseException;
+import software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEvent;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEventStream;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponseHandler;
@@ -181,6 +184,15 @@ public class FanOutKinesisShardSubscription {
     public SubscribeToShardEvent nextEvent() {
         Throwable throwable = subscriptionException.get();
         if (throwable != null) {
+            // If consumer is still activating, we want to wait.
+            if (ExceptionUtils.findThrowable(throwable, ResourceInUseException.class).isPresent()) {
+                return null;
+            }
+            // We don't want to wrap ResourceNotFoundExceptions because it is handled via a
+            // try-catch loop
+            if (throwable instanceof ResourceNotFoundException) {
+                throw (ResourceNotFoundException) throwable;
+            }
             LOG.error("Subscription encountered unrecoverable exception.", throwable);
             throw new KinesisStreamsSourceException(
                     "Subscription encountered unrecoverable exception.", throwable);
