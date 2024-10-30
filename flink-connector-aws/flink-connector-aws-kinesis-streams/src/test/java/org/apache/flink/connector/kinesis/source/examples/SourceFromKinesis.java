@@ -26,6 +26,9 @@ import org.apache.flink.connector.kinesis.source.KinesisStreamsSource;
 import org.apache.flink.connector.kinesis.source.enumerator.assigner.ShardAssignerFactory;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
 
+import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.InitialPosition.TRIM_HORIZON;
+import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.STREAM_INITIAL_POSITION;
+
 /**
  * An example application demonstrating how to use the {@link KinesisStreamsSource} to read from
  * KDS.
@@ -38,15 +41,25 @@ public class SourceFromKinesis {
         env.setParallelism(2);
 
         Configuration sourceConfig = new Configuration();
+        //        sourceConfig.set(READER_TYPE, ReaderType.EFO);
+        //        sourceConfig.set(EFO_CONSUMER_NAME, "efo-test");
+        sourceConfig.set(STREAM_INITIAL_POSITION, TRIM_HORIZON);
+        //        sourceConfig.set(EFO_CONSUMER_LIFECYCLE, SELF_MANAGED);
         KinesisStreamsSource<String> kdsSource =
                 KinesisStreamsSource.<String>builder()
-                        .setStreamArn("arn:aws:kinesis:us-east-1:123456789012:stream/test-stream")
+                        .setStreamArn(
+                                "arn:aws:kinesis:us-east-1:290038087681:stream/example-stream-8mbps")
                         .setSourceConfig(sourceConfig)
                         .setDeserializationSchema(new SimpleStringSchema())
                         .setKinesisShardAssigner(ShardAssignerFactory.uniformShardAssigner())
                         .build();
         env.fromSource(kdsSource, WatermarkStrategy.noWatermarks(), "Kinesis source")
                 .returns(TypeInformation.of(String.class))
+                //                .map(
+                //                        s -> {
+                //                            Thread.sleep(10000);
+                //                            return s;
+                //                        })
                 .print();
 
         env.execute("KinesisSource Example Program");
