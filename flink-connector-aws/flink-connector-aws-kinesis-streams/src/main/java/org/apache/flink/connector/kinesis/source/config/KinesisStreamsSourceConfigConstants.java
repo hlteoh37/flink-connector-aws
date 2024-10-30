@@ -94,4 +94,28 @@ public class KinesisStreamsSourceConfigConstants {
 
     public static final ConfigOption<String> EFO_CONSUMER_NAME =
             ConfigOptions.key("efo.consumer.name").stringType().noDefaultValue();
+
+    public static final ConfigOption<Duration>
+            EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MIN_DELAY_OPTION =
+                    ConfigOptions.key("efo.consumer.describe.retry-strategy.delay.min")
+                            .durationType()
+                            .defaultValue(Duration.ofMillis(300))
+                            .withDescription(
+                                    "Base delay for the exponential backoff retry strategy");
+
+    public static final ConfigOption<Duration>
+            EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_DELAY_OPTION =
+                    ConfigOptions.key("efo.consumer.describe.retry-strategy.delay.max")
+                            .durationType()
+                            .defaultValue(Duration.ofMillis(1000))
+                            .withDescription(
+                                    "Max delay for the exponential backoff retry strategy");
+
+    public static final ConfigOption<Integer>
+            EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_ATTEMPTS_OPTION =
+                    ConfigOptions.key("efo.consumer.describe.retry-strategy.attempts.max")
+                            .intType()
+                            .defaultValue(50)
+                            .withDescription(
+                                    "Maximum number of attempts for the exponential backoff retry strategy");
 }

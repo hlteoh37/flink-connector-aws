@@ -62,12 +62,14 @@ import software.amazon.awssdk.http.SdkHttpClient;
 import software.amazon.awssdk.http.apache.ApacheHttpClient;
 import software.amazon.awssdk.http.async.SdkAsyncHttpClient;
 import software.amazon.awssdk.http.nio.netty.NettyNioAsyncHttpClient;
+import software.amazon.awssdk.retries.StandardRetryStrategy;
 import software.amazon.awssdk.retries.api.BackoffStrategy;
 import software.amazon.awssdk.retries.api.RetryStrategy;
 import software.amazon.awssdk.services.kinesis.KinesisAsyncClient;
 import software.amazon.awssdk.services.kinesis.KinesisClient;
 import software.amazon.awssdk.services.kinesis.model.DescribeStreamConsumerResponse;
 import software.amazon.awssdk.services.kinesis.model.Record;
+import software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException;
 import software.amazon.awssdk.utils.AttributeMap;
 
 import java.io.IOException;
@@ -78,6 +80,9 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.EFO_CONSUMER_NAME;
+import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_ATTEMPTS_OPTION;
+import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_DELAY_OPTION;
+import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MIN_DELAY_OPTION;
 import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.READER_TYPE;
 
 /**
@@ -240,7 +245,15 @@ public class KinesisStreamsSource<T>
     }
 
     private String getConsumerArn(final String streamArn, final String consumerName) {
-        try (StreamProxy streamProxy = createKinesisStreamProxy(sourceConfig)) {
+        StandardRetryStrategy.Builder retryStrategyBuilder =
+                createExpBackoffRetryStrategyBuilder(
+                        sourceConfig.get(EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MIN_DELAY_OPTION),
+                        sourceConfig.get(EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_DELAY_OPTION),
+                        sourceConfig.get(EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_ATTEMPTS_OPTION));
+        retryStrategyBuilder.retryOnExceptionOrCauseInstanceOf(ResourceNotFoundException.class);
+
+        try (StreamProxy streamProxy =
+                createKinesisStreamProxy(sourceConfig, retryStrategyBuilder.build())) {
             DescribeStreamConsumerResponse response =
                     streamProxy.describeStreamConsumer(streamArn, consumerName);
             return response.consumerDescription().consumerARN();
@@ -279,6 +292,16 @@ public class KinesisStreamsSource<T>
     }
 
     private KinesisStreamProxy createKinesisStreamProxy(Configuration consumerConfig) {
+        return createKinesisStreamProxy(
+                consumerConfig,
+                createExpBackoffRetryStrategy(
+                        sourceConfig.get(AWSConfigOptions.RETRY_STRATEGY_MIN_DELAY_OPTION),
+                        sourceConfig.get(AWSConfigOptions.RETRY_STRATEGY_MAX_DELAY_OPTION),
+                        sourceConfig.get(AWSConfigOptions.RETRY_STRATEGY_MAX_ATTEMPTS_OPTION)));
+    }
+
+    private KinesisStreamProxy createKinesisStreamProxy(
+            Configuration consumerConfig, RetryStrategy retryStrategy) {
         String region =
                 AWSGeneralUtil.getRegionFromArn(streamArn)
                         .orElseThrow(
@@ -290,16 +313,7 @@ public class KinesisStreamsSource<T>
         kinesisClientProperties.put(AWSConfigConstants.AWS_REGION, region);
 
         final ClientOverrideConfiguration.Builder overrideBuilder =
-                ClientOverrideConfiguration.builder()
-                        .retryStrategy(
-                                createExpBackoffRetryStrategy(
-                                        sourceConfig.get(
-                                                AWSConfigOptions.RETRY_STRATEGY_MIN_DELAY_OPTION),
-                                        sourceConfig.get(
-                                                AWSConfigOptions.RETRY_STRATEGY_MAX_DELAY_OPTION),
-                                        sourceConfig.get(
-                                                AWSConfigOptions
-                                                        .RETRY_STRATEGY_MAX_ATTEMPTS_OPTION)));
+                ClientOverrideConfiguration.builder().retryStrategy(retryStrategy);
 
         SdkHttpClient httpClient =
                 AWSGeneralUtil.createSyncHttpClient(
@@ -335,13 +349,21 @@ public class KinesisStreamsSource<T>
 
     private RetryStrategy createExpBackoffRetryStrategy(
             Duration initialDelay, Duration maxDelay, int maxAttempts) {
+        return createExpBackoffRetryStrategyBuilder(initialDelay, maxDelay, maxAttempts).build();
+    }
+
+    private StandardRetryStrategy.Builder createExpBackoffRetryStrategyBuilder(
+            Duration initialDelay, Duration maxDelay, int maxAttempts) {
         final BackoffStrategy backoffStrategy =
                 BackoffStrategy.exponentialDelayHalfJitter(initialDelay, maxDelay);
 
-        return SdkDefaultRetryStrategy.standardRetryStrategyBuilder()
-                .backoffStrategy(backoffStrategy)
-                .throttlingBackoffStrategy(backoffStrategy)
-                .maxAttempts(maxAttempts)
-                .build();
+        StandardRetryStrategy.Builder retryStrategyBuilder =
+                SdkDefaultRetryStrategy.standardRetryStrategyBuilder()
+                        .backoffStrategy(backoffStrategy)
+                        .throttlingBackoffStrategy(backoffStrategy)
+                        .circuitBreakerEnabled(false)
+                        .maxAttempts(maxAttempts);
+
+        return retryStrategyBuilder;
     }
 }
