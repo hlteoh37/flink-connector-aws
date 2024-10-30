@@ -21,7 +21,7 @@ package org.apache.flink.connector.kinesis.source.reader.fanout;
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitsChange;
 import org.apache.flink.connector.kinesis.source.metrics.KinesisShardMetrics;
-import org.apache.flink.connector.kinesis.source.proxy.KinesisAsyncStreamProxy;
+import org.apache.flink.connector.kinesis.source.proxy.AsyncStreamProxy;
 import org.apache.flink.connector.kinesis.source.reader.KinesisShardSplitReaderBase;
 import org.apache.flink.connector.kinesis.source.split.KinesisShardSplit;
 import org.apache.flink.connector.kinesis.source.split.KinesisShardSplitState;
@@ -37,13 +37,13 @@ import java.util.Map;
  */
 @Internal
 public class FanOutKinesisShardSplitReader extends KinesisShardSplitReaderBase {
-    private final KinesisAsyncStreamProxy asyncStreamProxy;
+    private final AsyncStreamProxy asyncStreamProxy;
     private final String consumerArn;
 
     private final Map<String, FanOutKinesisShardSubscription> splitSubscriptions = new HashMap<>();
 
     public FanOutKinesisShardSplitReader(
-            KinesisAsyncStreamProxy asyncStreamProxy,
+            AsyncStreamProxy asyncStreamProxy,
             String consumerArn,
             Map<String, KinesisShardMetrics> shardMetricGroupMap) {
         super(shardMetricGroupMap);
@@ -84,5 +84,7 @@ public class FanOutKinesisShardSplitReader extends KinesisShardSplitReaderBase {
     }
 
     @Override
-    public void close() throws Exception {}
+    public void close() throws Exception {
+        asyncStreamProxy.close();
+    }
 }
