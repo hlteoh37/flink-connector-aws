@@ -269,6 +269,10 @@ public class KinesisStreamsSourceEnumerator
             InitialPosition initialPosition, Instant currentTime) {
         switch (initialPosition) {
             case LATEST:
+                LOG.info(
+                        "Starting consumption from stream {} from LATEST. This translates into AT_TIMESTAMP from {}",
+                        streamArn,
+                        currentTime.toString());
                 return ListShardsStartingPosition.fromTimestamp(currentTime);
             case AT_TIMESTAMP:
                 Instant timestamp =
@@ -277,8 +281,13 @@ public class KinesisStreamsSourceEnumerator
                                         () ->
                                                 new IllegalArgumentException(
                                                         "Stream initial timestamp must be specified when initial position set to AT_TIMESTAMP"));
+                LOG.info(
+                        "Starting consumption from stream {} from AT_TIMESTAMP, starting from {}",
+                        streamArn,
+                        timestamp.toString());
                 return ListShardsStartingPosition.fromTimestamp(timestamp);
             case TRIM_HORIZON:
+                LOG.info("Starting consumption from stream {} from TRIM_HORIZON.", streamArn);
                 return ListShardsStartingPosition.fromStart();
         }
 
