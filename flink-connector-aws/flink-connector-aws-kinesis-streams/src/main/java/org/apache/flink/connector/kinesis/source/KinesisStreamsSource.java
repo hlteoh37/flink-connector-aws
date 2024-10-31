@@ -34,7 +34,7 @@ import org.apache.flink.connector.aws.util.AWSGeneralUtil;
 import org.apache.flink.connector.base.source.reader.fetcher.SingleThreadFetcherManager;
 import org.apache.flink.connector.base.source.reader.splitreader.SplitReader;
 import org.apache.flink.connector.kinesis.sink.KinesisStreamsConfigConstants;
-import org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants;
+import org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions;
 import org.apache.flink.connector.kinesis.source.enumerator.KinesisShardAssigner;
 import org.apache.flink.connector.kinesis.source.enumerator.KinesisStreamsSourceEnumerator;
 import org.apache.flink.connector.kinesis.source.enumerator.KinesisStreamsSourceEnumeratorState;
@@ -79,11 +79,11 @@ import java.util.Properties;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.EFO_CONSUMER_NAME;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_ATTEMPTS_OPTION;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_DELAY_OPTION;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MIN_DELAY_OPTION;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.READER_TYPE;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_CONSUMER_NAME;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_ATTEMPTS_OPTION;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_DELAY_OPTION;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MIN_DELAY_OPTION;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.READER_TYPE;
 
 /**
  * The {@link KinesisStreamsSource} is an exactly-once parallel streaming data source that
@@ -207,7 +207,7 @@ public class KinesisStreamsSource<T>
 
     private Supplier<SplitReader<Record, KinesisShardSplit>> getKinesisShardSplitReaderSupplier(
             Configuration sourceConfig, Map<String, KinesisShardMetrics> shardMetricGroupMap) {
-        KinesisStreamsSourceConfigConstants.ReaderType readerType = sourceConfig.get(READER_TYPE);
+        KinesisSourceConfigOptions.ReaderType readerType = sourceConfig.get(READER_TYPE);
         switch (readerType) {
             case POLLING:
                 return getPollingKinesisShardSplitReaderSupplier(sourceConfig, shardMetricGroupMap);

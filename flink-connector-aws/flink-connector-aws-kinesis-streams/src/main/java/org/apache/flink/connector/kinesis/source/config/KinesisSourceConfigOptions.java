@@ -26,7 +26,7 @@ import java.time.Duration;
 
 /** Constants to be used with the KinesisStreamsSource. */
 @Experimental
-public class KinesisStreamsSourceConfigConstants {
+public class KinesisSourceConfigOptions {
     /** Marks the initial position to use when reading from the Kinesis stream. */
     public enum InitialPosition {
         LATEST,
@@ -107,7 +107,7 @@ public class KinesisStreamsSourceConfigConstants {
             EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_DELAY_OPTION =
                     ConfigOptions.key("efo.consumer.describe.retry-strategy.delay.max")
                             .durationType()
-                            .defaultValue(Duration.ofMillis(1000))
+                            .defaultValue(Duration.ofMillis(10000))
                             .withDescription(
                                     "Max delay for the exponential backoff retry strategy");
 

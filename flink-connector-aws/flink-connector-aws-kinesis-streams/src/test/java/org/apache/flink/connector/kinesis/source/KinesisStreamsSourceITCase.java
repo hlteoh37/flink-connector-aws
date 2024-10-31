@@ -52,8 +52,8 @@ import static org.apache.flink.connector.aws.config.AWSConfigConstants.AWS_REGIO
 import static org.apache.flink.connector.aws.config.AWSConfigConstants.AWS_SECRET_ACCESS_KEY;
 import static org.apache.flink.connector.aws.config.AWSConfigConstants.HTTP_PROTOCOL_VERSION;
 import static org.apache.flink.connector.aws.config.AWSConfigConstants.TRUST_ALL_CERTIFICATES;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.InitialPosition;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.STREAM_INITIAL_POSITION;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.InitialPosition;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.STREAM_INITIAL_POSITION;
 
 /**
  * IT cases for using {@code KinesisStreamsSource} using a localstack container. StopWithSavepoint

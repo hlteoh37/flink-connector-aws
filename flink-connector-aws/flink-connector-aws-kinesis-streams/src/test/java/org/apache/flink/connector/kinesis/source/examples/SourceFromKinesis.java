@@ -23,11 +23,15 @@ import org.apache.flink.api.common.serialization.SimpleStringSchema;
 import org.apache.flink.api.common.typeinfo.TypeInformation;
 import org.apache.flink.configuration.Configuration;
 import org.apache.flink.connector.kinesis.source.KinesisStreamsSource;
+import org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions;
 import org.apache.flink.connector.kinesis.source.enumerator.assigner.ShardAssignerFactory;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
+import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
 
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.InitialPosition.TRIM_HORIZON;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.STREAM_INITIAL_POSITION;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_CONSUMER_NAME;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.InitialPosition.TRIM_HORIZON;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.READER_TYPE;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.STREAM_INITIAL_POSITION;
 
 /**
  * An example application demonstrating how to use the {@link KinesisStreamsSource} to read from
@@ -41,8 +45,8 @@ public class SourceFromKinesis {
         env.setParallelism(2);
 
         Configuration sourceConfig = new Configuration();
-        //        sourceConfig.set(READER_TYPE, ReaderType.EFO);
-        //        sourceConfig.set(EFO_CONSUMER_NAME, "efo-test");
+        sourceConfig.set(READER_TYPE, KinesisSourceConfigOptions.ReaderType.EFO);
+        sourceConfig.set(EFO_CONSUMER_NAME, "efo-test-st");
         sourceConfig.set(STREAM_INITIAL_POSITION, TRIM_HORIZON);
         //        sourceConfig.set(EFO_CONSUMER_LIFECYCLE, SELF_MANAGED);
         KinesisStreamsSource<String> kdsSource =
@@ -55,12 +59,13 @@ public class SourceFromKinesis {
                         .build();
         env.fromSource(kdsSource, WatermarkStrategy.noWatermarks(), "Kinesis source")
                 .returns(TypeInformation.of(String.class))
-                //                .map(
-                //                        s -> {
-                //                            Thread.sleep(10000);
-                //                            return s;
-                //                        })
-                .print();
+                .addSink(new DiscardingSink<>());
+        //                .map(
+        //                        s -> {
+        //                            Thread.sleep(10000);
+        //                            return s;
+        //                        })
+        //                .print();
 
         env.execute("KinesisSource Example Program");
     }

@@ -20,7 +20,7 @@ package org.apache.flink.connector.kinesis.source.reader.polling;
 
 import org.apache.flink.annotation.Internal;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants;
+import org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions;
 import org.apache.flink.connector.kinesis.source.metrics.KinesisShardMetrics;
 import org.apache.flink.connector.kinesis.source.proxy.StreamProxy;
 import org.apache.flink.connector.kinesis.source.reader.KinesisShardSplitReaderBase;
@@ -47,8 +47,7 @@ public class PollingKinesisShardSplitReader extends KinesisShardSplitReaderBase 
         super(shardMetricGroupMap);
         this.kinesis = kinesisProxy;
         this.configuration = configuration;
-        this.maxRecordsToGet =
-                configuration.get(KinesisStreamsSourceConfigConstants.SHARD_GET_RECORDS_MAX);
+        this.maxRecordsToGet = configuration.get(KinesisSourceConfigOptions.SHARD_GET_RECORDS_MAX);
     }
 
     @Override

@@ -24,6 +24,7 @@ import org.apache.flink.connector.kinesis.source.proxy.AsyncStreamProxy;
 import org.apache.flink.connector.kinesis.source.split.StartingPosition;
 import org.apache.flink.util.ExceptionUtils;
 
+import io.netty.handler.timeout.ReadTimeoutException;
 import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
@@ -34,7 +35,11 @@ import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEvent;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEventStream;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponseHandler;
 
+import java.io.IOException;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
@@ -52,6 +57,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @Internal
 public class FanOutKinesisShardSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(FanOutKinesisShardSubscription.class);
+    private static final List<Class<? extends Throwable>> RECOVERABLE_EXCEPTIONS =
+            Arrays.asList(ReadTimeoutException.class, TimeoutException.class, IOException.class);
 
     private final AsyncStreamProxy kinesis;
     private final String consumerArn;
@@ -182,7 +189,7 @@ public class FanOutKinesisShardSubscription {
      *     not yet active and fetching should be retried at a later time.
      */
     public SubscribeToShardEvent nextEvent() {
-        Throwable throwable = subscriptionException.get();
+        Throwable throwable = subscriptionException.getAndSet(null);
         if (throwable != null) {
             // If consumer is still activating, we want to wait.
             if (ExceptionUtils.findThrowable(throwable, ResourceInUseException.class).isPresent()) {
@@ -192,6 +199,20 @@ public class FanOutKinesisShardSubscription {
             // try-catch loop
             if (throwable instanceof ResourceNotFoundException) {
                 throw (ResourceNotFoundException) throwable;
+            }
+            Optional<? extends Throwable> recoverableException =
+                    RECOVERABLE_EXCEPTIONS.stream()
+                            .map(clazz -> ExceptionUtils.findThrowable(throwable, clazz))
+                            .filter(Optional::isPresent)
+                            .map(Optional::get)
+                            .findFirst();
+            if (recoverableException.isPresent()) {
+                LOG.warn(
+                        "Recoverable exception encountered while subscribing to shard. Ignoring.",
+                        recoverableException.get());
+                shardSubscriber.cancel();
+                activateSubscription();
+                return null;
             }
             LOG.error("Subscription encountered unrecoverable exception.", throwable);
             throw new KinesisStreamsSourceException(
@@ -232,7 +253,9 @@ public class FanOutKinesisShardSubscription {
                 return;
             }
             subscriptionActive.set(false);
-            subscription.cancel();
+            if (subscription != null) {
+                subscription.cancel();
+            }
         }
 
         @Override
@@ -279,7 +302,6 @@ public class FanOutKinesisShardSubscription {
 
         @Override
         public void onError(Throwable throwable) {
-            // TODO: Add recoverable error
             if (!subscriptionException.compareAndSet(null, throwable)) {
                 LOG.warn(
                         "Another subscription exception has been queued, ignoring subsequent exceptions",
@@ -290,7 +312,7 @@ public class FanOutKinesisShardSubscription {
         @Override
         public void onComplete() {
             LOG.info("Subscription complete - {} ({})", shardId, consumerArn);
-            subscriptionActive.set(false);
+            cancel();
             activateSubscription();
         }
     }

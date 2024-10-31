@@ -26,7 +26,7 @@ import org.apache.flink.api.connector.source.SplitEnumerator;
 import org.apache.flink.api.connector.source.SplitEnumeratorContext;
 import org.apache.flink.api.connector.source.SplitsAssignment;
 import org.apache.flink.configuration.Configuration;
-import org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.InitialPosition;
+import org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.InitialPosition;
 import org.apache.flink.connector.kinesis.source.enumerator.tracker.SplitTracker;
 import org.apache.flink.connector.kinesis.source.event.SplitsFinishedEvent;
 import org.apache.flink.connector.kinesis.source.exception.KinesisStreamsSourceException;
@@ -60,13 +60,13 @@ import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.ConsumerLifecycle.JOB_MANAGED;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.EFO_CONSUMER_LIFECYCLE;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.EFO_CONSUMER_NAME;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.READER_TYPE;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.ReaderType.EFO;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.SHARD_DISCOVERY_INTERVAL;
-import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigConstants.STREAM_INITIAL_POSITION;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.ConsumerLifecycle.JOB_MANAGED;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_CONSUMER_LIFECYCLE;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_CONSUMER_NAME;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.READER_TYPE;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.ReaderType.EFO;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.SHARD_DISCOVERY_INTERVAL;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.STREAM_INITIAL_POSITION;
 import static org.apache.flink.connector.kinesis.source.config.KinesisStreamsSourceConfigUtil.parseStreamTimestampStartingPosition;
 
 /**
