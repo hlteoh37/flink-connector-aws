@@ -257,7 +257,7 @@ public class KinesisStreamsSource<T>
             DescribeStreamConsumerResponse response =
                     streamProxy.describeStreamConsumer(streamArn, consumerName);
             return response.consumerDescription().consumerARN();
-        } catch (IOException e) {
+        } catch (Exception e) {
             throw new KinesisStreamsSourceException(
                     "Unable to lookup consumer ARN for stream "
                             + streamArn
