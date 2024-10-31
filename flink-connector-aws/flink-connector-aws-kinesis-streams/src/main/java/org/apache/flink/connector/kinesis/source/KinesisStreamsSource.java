@@ -72,7 +72,6 @@ import software.amazon.awssdk.services.kinesis.model.Record;
 import software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException;
 import software.amazon.awssdk.utils.AttributeMap;
 
-import java.io.IOException;
 import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
@@ -212,7 +211,9 @@ public class KinesisStreamsSource<T>
             case POLLING:
                 return getPollingKinesisShardSplitReaderSupplier(sourceConfig, shardMetricGroupMap);
             case EFO:
-                return getFanOutKinesisShardSplitReaderSupplier(sourceConfig, shardMetricGroupMap);
+                String consumerArn = getConsumerArn(streamArn, sourceConfig.get(EFO_CONSUMER_NAME));
+                return getFanOutKinesisShardSplitReaderSupplier(
+                        consumerArn, sourceConfig, shardMetricGroupMap);
             default:
                 throw new IllegalArgumentException("Unsupported reader type: " + readerType);
         }
@@ -231,9 +232,9 @@ public class KinesisStreamsSource<T>
 
     private Supplier<SplitReader<Record, KinesisShardSplit>>
             getFanOutKinesisShardSplitReaderSupplier(
+                    String consumerArn,
                     Configuration sourceConfig,
                     Map<String, KinesisShardMetrics> shardMetricGroupMap) {
-        String consumerArn = getConsumerArn(streamArn, sourceConfig.get(EFO_CONSUMER_NAME));
 
         // We create a new stream proxy for each split reader since they have their own independent
         // lifecycle.
