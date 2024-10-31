@@ -126,6 +126,13 @@ public class FanOutKinesisShardSubscription {
         kinesis.subscribeToShard(consumerArn, shardId, startingPosition, responseHandler)
                 .exceptionally(
                         throwable -> {
+                            // If consumer exists and is still activating, we want to countdown.
+                            if (ExceptionUtils.findThrowable(
+                                            throwable, ResourceInUseException.class)
+                                    .isPresent()) {
+                                waitForSubscriptionLatch.countDown();
+                                return null;
+                            }
                             LOG.error(
                                     "Error subscribing to shard {} with starting position {} for consumer {}.",
                                     shardId,
