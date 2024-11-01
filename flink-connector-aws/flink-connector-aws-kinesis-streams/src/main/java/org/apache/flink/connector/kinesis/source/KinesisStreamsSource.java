@@ -68,6 +68,7 @@ import software.amazon.awssdk.retries.api.RetryStrategy;
 import software.amazon.awssdk.services.kinesis.KinesisAsyncClient;
 import software.amazon.awssdk.services.kinesis.KinesisClient;
 import software.amazon.awssdk.services.kinesis.model.DescribeStreamConsumerResponse;
+import software.amazon.awssdk.services.kinesis.model.LimitExceededException;
 import software.amazon.awssdk.services.kinesis.model.Record;
 import software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException;
 import software.amazon.awssdk.utils.AttributeMap;
@@ -252,6 +253,7 @@ public class KinesisStreamsSource<T>
                         sourceConfig.get(EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_DELAY_OPTION),
                         sourceConfig.get(EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_ATTEMPTS_OPTION));
         retryStrategyBuilder.retryOnExceptionOrCauseInstanceOf(ResourceNotFoundException.class);
+        retryStrategyBuilder.retryOnExceptionOrCauseInstanceOf(LimitExceededException.class);
 
         try (StreamProxy streamProxy =
                 createKinesisStreamProxy(sourceConfig, retryStrategyBuilder.build())) {
