@@ -190,7 +190,7 @@ public class KinesisStreamsSource<T>
                 enumContext,
                 streamArn,
                 sourceConfig,
-                createKinesisStreamProxy(sourceConfig),
+                streamProxy,
                 kinesisShardAssigner,
                 checkpoint,
                 preserveShardOrder,
