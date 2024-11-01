@@ -60,6 +60,8 @@ public class FanOutKinesisShardSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(FanOutKinesisShardSubscription.class);
     private static final List<Class<? extends Throwable>> RECOVERABLE_EXCEPTIONS =
             Arrays.asList(
+                    ResourceNotFoundException.class,
+                    ResourceInUseException.class,
                     ReadTimeoutException.class,
                     TimeoutException.class,
                     IOException.class,
