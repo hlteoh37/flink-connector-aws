@@ -26,7 +26,6 @@ import org.apache.flink.connector.kinesis.source.KinesisStreamsSource;
 import org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions;
 import org.apache.flink.connector.kinesis.source.enumerator.assigner.ShardAssignerFactory;
 import org.apache.flink.streaming.api.environment.StreamExecutionEnvironment;
-import org.apache.flink.streaming.api.functions.sink.DiscardingSink;
 
 import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_CONSUMER_NAME;
 import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.InitialPosition.TRIM_HORIZON;
@@ -46,7 +45,7 @@ public class SourceFromKinesis {
 
         Configuration sourceConfig = new Configuration();
         sourceConfig.set(READER_TYPE, KinesisSourceConfigOptions.ReaderType.EFO);
-        sourceConfig.set(EFO_CONSUMER_NAME, "efo-test-st");
+        sourceConfig.set(EFO_CONSUMER_NAME, "efo-test-ssst");
         sourceConfig.set(STREAM_INITIAL_POSITION, TRIM_HORIZON);
         //        sourceConfig.set(EFO_CONSUMER_LIFECYCLE, SELF_MANAGED);
         KinesisStreamsSource<String> kdsSource =
@@ -59,7 +58,8 @@ public class SourceFromKinesis {
                         .build();
         env.fromSource(kdsSource, WatermarkStrategy.noWatermarks(), "Kinesis source")
                 .returns(TypeInformation.of(String.class))
-                .addSink(new DiscardingSink<>());
+                .print();
+        //                .addSink(new DiscardingSink<>());
         //                .map(
         //                        s -> {
         //                            Thread.sleep(10000);

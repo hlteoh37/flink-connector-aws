@@ -84,5 +84,7 @@ public class FanOutKinesisShardSplitReader extends KinesisShardSplitReaderBase {
     }
 
     @Override
-    public void close() throws Exception {}
+    public void close() throws Exception {
+        asyncStreamProxy.close();
+    }
 }

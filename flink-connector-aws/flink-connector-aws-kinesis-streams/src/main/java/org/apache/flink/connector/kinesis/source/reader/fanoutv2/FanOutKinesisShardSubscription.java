@@ -22,13 +22,21 @@ import org.apache.flink.annotation.Internal;
 import org.apache.flink.connector.kinesis.source.exception.KinesisStreamsSourceException;
 import org.apache.flink.connector.kinesis.source.proxy.AsyncStreamProxy;
 import org.apache.flink.connector.kinesis.source.split.StartingPosition;
+import org.apache.flink.util.ExceptionUtils;
 
+import io.netty.handler.timeout.ReadTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.kinesis.model.ResourceInUseException;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEvent;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponseHandler;
 
+import java.io.IOException;
 import java.time.Duration;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.TimeoutException;
 
 /**
  * FanOutSubscription class responsible for handling the subscription to a single shard of the
@@ -38,6 +46,8 @@ import java.time.Duration;
 @Internal
 class FanOutKinesisShardSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(FanOutKinesisShardSubscription.class);
+    private static final List<Class<? extends Throwable>> RECOVERABLE_EXCEPTIONS =
+            Arrays.asList(ReadTimeoutException.class, TimeoutException.class, IOException.class);
 
     private final AsyncStreamProxy kinesis;
     private final String consumerArn;
@@ -72,6 +82,7 @@ class FanOutKinesisShardSubscription {
                 consumerArn);
 
         subscriber = new FanOutShardSubscriber(consumerArn, shardId, startingPosition);
+        subscriptionFailure = null;
 
         SubscribeToShardResponseHandler responseHandler =
                 SubscribeToShardResponseHandler.builder()
@@ -104,6 +115,7 @@ class FanOutKinesisShardSubscription {
     private void terminateSubscription(Throwable t) {
         this.subscriptionFailure = t;
         subscriber.cancel();
+        subscriber = null;
     }
 
     /**
@@ -123,6 +135,12 @@ class FanOutKinesisShardSubscription {
         }
 
         if (subscriptionFailure != null) {
+            // If consumer exists and is still activating, we want to retry subscription.
+            if (ExceptionUtils.findThrowable(subscriptionFailure, ResourceInUseException.class)
+                    .isPresent()) {
+                activateSubscription();
+                return null;
+            }
             LOG.error("Subscription encountered unrecoverable exception.", subscriptionFailure);
             throw new KinesisStreamsSourceException(
                     "Subscription encountered unrecoverable exception.", subscriptionFailure);
@@ -133,12 +151,30 @@ class FanOutKinesisShardSubscription {
                     .getFailure()
                     .map(
                             (failure) -> {
-                                LOG.error(
-                                        "Subscription encountered unrecoverable exception.",
-                                        failure);
-                                throw new KinesisStreamsSourceException(
-                                        "Subscription encountered unrecoverable exception.",
-                                        failure);
+                                Optional<? extends Throwable> recoverableException =
+                                        RECOVERABLE_EXCEPTIONS.stream()
+                                                .map(
+                                                        clazz ->
+                                                                ExceptionUtils.findThrowable(
+                                                                        failure, clazz))
+                                                .filter(Optional::isPresent)
+                                                .map(Optional::get)
+                                                .findFirst();
+                                if (recoverableException.isPresent()) {
+                                    LOG.warn(
+                                            "Encountered recoverable exception while subscribing to shard {}.",
+                                            shardId,
+                                            recoverableException.get());
+                                    activateSubscription();
+                                    return null;
+                                } else {
+                                    LOG.error(
+                                            "Subscription encountered unrecoverable exception.",
+                                            failure);
+                                    throw new KinesisStreamsSourceException(
+                                            "Subscription encountered unrecoverable exception.",
+                                            failure);
+                                }
                             })
                     .orElseThrow(
                             () ->
