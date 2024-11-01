@@ -256,9 +256,6 @@ public class KinesisStreamsSource<T>
 
     private KinesisAsyncStreamProxy createKinesisAsyncStreamProxy(
             String streamArn, Configuration consumerConfig) {
-        SdkAsyncHttpClient asyncHttpClient =
-                AWSGeneralUtil.createAsyncHttpClient(
-                        AttributeMap.builder().build(), NettyNioAsyncHttpClient.builder());
         String region =
                 AWSGeneralUtil.getRegionFromArn(streamArn)
                         .orElseThrow(
@@ -269,6 +266,9 @@ public class KinesisStreamsSource<T>
         consumerConfig.addAllToProperties(kinesisClientProperties);
         kinesisClientProperties.put(AWSConfigConstants.AWS_REGION, region);
 
+        SdkAsyncHttpClient asyncHttpClient =
+                AWSGeneralUtil.createAsyncHttpClient(
+                        AttributeMap.builder().build(), NettyNioAsyncHttpClient.builder());
         KinesisAsyncClient kinesisAsyncClient =
                 AWSClientUtil.createAwsAsyncClient(
                         kinesisClientProperties,
