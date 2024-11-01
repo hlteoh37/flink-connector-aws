@@ -209,41 +209,25 @@ public class KinesisStreamsSource<T>
             Configuration sourceConfig, Map<String, KinesisShardMetrics> shardMetricGroupMap) {
         KinesisSourceConfigOptions.ReaderType readerType = sourceConfig.get(READER_TYPE);
         switch (readerType) {
+                // We create a new stream proxy for each split reader since they have their own
+                // independent
+                // lifecycle.
             case POLLING:
-                return getPollingKinesisShardSplitReaderSupplier(sourceConfig, shardMetricGroupMap);
+                return () ->
+                        new PollingKinesisShardSplitReader(
+                                createKinesisStreamProxy(sourceConfig),
+                                shardMetricGroupMap,
+                                sourceConfig);
             case EFO:
                 String consumerArn = getConsumerArn(streamArn, sourceConfig.get(EFO_CONSUMER_NAME));
-                return getFanOutKinesisShardSplitReaderSupplier(
-                        consumerArn, sourceConfig, shardMetricGroupMap);
+                return () ->
+                        new FanOutKinesisShardSplitReader(
+                                createKinesisAsyncStreamProxy(sourceConfig),
+                                consumerArn,
+                                shardMetricGroupMap);
             default:
                 throw new IllegalArgumentException("Unsupported reader type: " + readerType);
         }
-    }
-
-    private Supplier<SplitReader<Record, KinesisShardSplit>>
-            getPollingKinesisShardSplitReaderSupplier(
-                    Configuration sourceConfig,
-                    Map<String, KinesisShardMetrics> shardMetricGroupMap) {
-        // We create a new stream proxy for each split reader since they have their own independent
-        // lifecycle.
-        return () ->
-                new PollingKinesisShardSplitReader(
-                        createKinesisStreamProxy(sourceConfig), shardMetricGroupMap, sourceConfig);
-    }
-
-    private Supplier<SplitReader<Record, KinesisShardSplit>>
-            getFanOutKinesisShardSplitReaderSupplier(
-                    String consumerArn,
-                    Configuration sourceConfig,
-                    Map<String, KinesisShardMetrics> shardMetricGroupMap) {
-
-        // We create a new stream proxy for each split reader since they have their own independent
-        // lifecycle.
-        return () ->
-                new FanOutKinesisShardSplitReader(
-                        createKinesisAsyncStreamProxy(sourceConfig),
-                        consumerArn,
-                        shardMetricGroupMap);
     }
 
     private String getConsumerArn(final String streamArn, final String consumerName) {
