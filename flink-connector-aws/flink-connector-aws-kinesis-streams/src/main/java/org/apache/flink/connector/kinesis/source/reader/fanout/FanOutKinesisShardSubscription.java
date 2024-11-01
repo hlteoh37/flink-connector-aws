@@ -29,6 +29,7 @@ import org.reactivestreams.Subscriber;
 import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.kinesis.model.LimitExceededException;
 import software.amazon.awssdk.services.kinesis.model.ResourceInUseException;
 import software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEvent;
@@ -58,7 +59,11 @@ import java.util.concurrent.atomic.AtomicReference;
 public class FanOutKinesisShardSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(FanOutKinesisShardSubscription.class);
     private static final List<Class<? extends Throwable>> RECOVERABLE_EXCEPTIONS =
-            Arrays.asList(ReadTimeoutException.class, TimeoutException.class, IOException.class);
+            Arrays.asList(
+                    ReadTimeoutException.class,
+                    TimeoutException.class,
+                    IOException.class,
+                    LimitExceededException.class);
 
     private final AsyncStreamProxy kinesis;
     private final String consumerArn;
