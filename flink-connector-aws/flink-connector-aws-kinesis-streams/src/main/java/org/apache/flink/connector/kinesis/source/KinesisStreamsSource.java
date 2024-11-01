@@ -46,6 +46,7 @@ import org.apache.flink.connector.kinesis.source.proxy.KinesisStreamProxy;
 import org.apache.flink.connector.kinesis.source.proxy.StreamProxy;
 import org.apache.flink.connector.kinesis.source.reader.KinesisStreamsRecordEmitter;
 import org.apache.flink.connector.kinesis.source.reader.KinesisStreamsSourceReader;
+import org.apache.flink.connector.kinesis.source.reader.fanout.StreamConsumerRegistrar;
 import org.apache.flink.connector.kinesis.source.reader.fanoutv2.FanOutKinesisShardSplitReader;
 import org.apache.flink.connector.kinesis.source.reader.polling.PollingKinesisShardSplitReader;
 import org.apache.flink.connector.kinesis.source.serialization.KinesisDeserializationSchema;
@@ -184,6 +185,7 @@ public class KinesisStreamsSource<T>
                     SplitEnumeratorContext<KinesisShardSplit> enumContext,
                     KinesisStreamsSourceEnumeratorState checkpoint)
                     throws Exception {
+        StreamProxy streamProxy = createKinesisStreamProxy(sourceConfig);
         return new KinesisStreamsSourceEnumerator(
                 enumContext,
                 streamArn,
@@ -191,7 +193,8 @@ public class KinesisStreamsSource<T>
                 createKinesisStreamProxy(sourceConfig),
                 kinesisShardAssigner,
                 checkpoint,
-                preserveShardOrder);
+                preserveShardOrder,
+                new StreamConsumerRegistrar(sourceConfig, streamArn, streamProxy));
     }
 
     @Override
@@ -210,8 +213,7 @@ public class KinesisStreamsSource<T>
         KinesisSourceConfigOptions.ReaderType readerType = sourceConfig.get(READER_TYPE);
         switch (readerType) {
                 // We create a new stream proxy for each split reader since they have their own
-                // independent
-                // lifecycle.
+                // independent lifecycle.
             case POLLING:
                 return () ->
                         new PollingKinesisShardSplitReader(
