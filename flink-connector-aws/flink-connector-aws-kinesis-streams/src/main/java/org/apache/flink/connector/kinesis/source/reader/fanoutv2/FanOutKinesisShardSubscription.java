@@ -27,6 +27,7 @@ import org.apache.flink.util.ExceptionUtils;
 import io.netty.handler.timeout.ReadTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.kinesis.model.InternalFailureException;
 import software.amazon.awssdk.services.kinesis.model.LimitExceededException;
 import software.amazon.awssdk.services.kinesis.model.ResourceInUseException;
 import software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException;
@@ -50,6 +51,7 @@ class FanOutKinesisShardSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(FanOutKinesisShardSubscription.class);
     private static final List<Class<? extends Throwable>> RECOVERABLE_EXCEPTIONS =
             Arrays.asList(
+                    InternalFailureException.class,
                     ResourceNotFoundException.class,
                     ResourceInUseException.class,
                     ReadTimeoutException.class,
