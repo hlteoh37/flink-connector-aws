@@ -222,7 +222,7 @@ public class KinesisStreamsSource<T>
                 String consumerArn = getConsumerArn(streamArn, sourceConfig.get(EFO_CONSUMER_NAME));
                 return () ->
                         new FanOutKinesisShardSplitReader(
-                                createKinesisAsyncStreamProxy(sourceConfig),
+                                createKinesisAsyncStreamProxy(streamArn, sourceConfig),
                                 consumerArn,
                                 shardMetricGroupMap);
             default:
@@ -254,7 +254,8 @@ public class KinesisStreamsSource<T>
         }
     }
 
-    private KinesisAsyncStreamProxy createKinesisAsyncStreamProxy(Configuration consumerConfig) {
+    private KinesisAsyncStreamProxy createKinesisAsyncStreamProxy(
+            String streamArn, Configuration consumerConfig) {
         SdkAsyncHttpClient asyncHttpClient =
                 AWSGeneralUtil.createAsyncHttpClient(
                         AttributeMap.builder().build(), NettyNioAsyncHttpClient.builder());
@@ -265,7 +266,7 @@ public class KinesisStreamsSource<T>
                                         new IllegalStateException(
                                                 "Unable to determine region from stream arn"));
         Properties kinesisClientProperties = new Properties();
-        sourceConfig.addAllToProperties(kinesisClientProperties);
+        consumerConfig.addAllToProperties(kinesisClientProperties);
         kinesisClientProperties.put(AWSConfigConstants.AWS_REGION, region);
 
         KinesisAsyncClient kinesisAsyncClient =
