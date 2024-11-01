@@ -114,7 +114,9 @@ class FanOutKinesisShardSubscription {
 
     private void terminateSubscription(Throwable t) {
         this.subscriptionFailure = t;
-        subscriber.cancel();
+        if (subscriber != null) {
+            subscriber.cancel();
+        }
         subscriber = null;
     }
 
