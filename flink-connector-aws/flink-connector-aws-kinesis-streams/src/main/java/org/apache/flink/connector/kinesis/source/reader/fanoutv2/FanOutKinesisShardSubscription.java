@@ -29,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import software.amazon.awssdk.services.kinesis.model.LimitExceededException;
 import software.amazon.awssdk.services.kinesis.model.ResourceInUseException;
+import software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEvent;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponseHandler;
 
@@ -49,6 +50,7 @@ class FanOutKinesisShardSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(FanOutKinesisShardSubscription.class);
     private static final List<Class<? extends Throwable>> RECOVERABLE_EXCEPTIONS =
             Arrays.asList(
+                    ResourceNotFoundException.class,
                     ResourceInUseException.class,
                     ReadTimeoutException.class,
                     TimeoutException.class,
@@ -97,6 +99,7 @@ class FanOutKinesisShardSubscription {
                                 throwable -> {
                                     // After subscription is acquired, these errors can be ignored.
                                     if (!subscriber.isSubscribed()) {
+
                                         terminateSubscription(throwable);
                                     }
                                 })
