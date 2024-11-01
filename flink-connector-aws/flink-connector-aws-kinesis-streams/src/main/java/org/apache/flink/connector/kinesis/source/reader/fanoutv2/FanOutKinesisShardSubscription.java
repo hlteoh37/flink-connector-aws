@@ -27,6 +27,7 @@ import org.apache.flink.util.ExceptionUtils;
 import io.netty.handler.timeout.ReadTimeoutException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.services.kinesis.model.LimitExceededException;
 import software.amazon.awssdk.services.kinesis.model.ResourceInUseException;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEvent;
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponseHandler;
@@ -47,7 +48,12 @@ import java.util.concurrent.TimeoutException;
 class FanOutKinesisShardSubscription {
     private static final Logger LOG = LoggerFactory.getLogger(FanOutKinesisShardSubscription.class);
     private static final List<Class<? extends Throwable>> RECOVERABLE_EXCEPTIONS =
-            Arrays.asList(ReadTimeoutException.class, TimeoutException.class, IOException.class);
+            Arrays.asList(
+                    ResourceInUseException.class,
+                    ReadTimeoutException.class,
+                    TimeoutException.class,
+                    IOException.class,
+                    LimitExceededException.class);
 
     private final AsyncStreamProxy kinesis;
     private final String consumerArn;
@@ -137,9 +143,13 @@ class FanOutKinesisShardSubscription {
         }
 
         if (subscriptionFailure != null) {
-            // If consumer exists and is still activating, we want to retry subscription.
-            if (ExceptionUtils.findThrowable(subscriptionFailure, ResourceInUseException.class)
-                    .isPresent()) {
+            Optional<? extends Throwable> recoverableException =
+                    getRecoverableException(subscriptionFailure);
+            if (recoverableException.isPresent()) {
+                LOG.warn(
+                        "Encountered recoverable exception while subscribing to shard {}.",
+                        shardId,
+                        recoverableException.get());
                 activateSubscription();
                 return null;
             }
@@ -154,17 +164,10 @@ class FanOutKinesisShardSubscription {
                     .map(
                             (failure) -> {
                                 Optional<? extends Throwable> recoverableException =
-                                        RECOVERABLE_EXCEPTIONS.stream()
-                                                .map(
-                                                        clazz ->
-                                                                ExceptionUtils.findThrowable(
-                                                                        failure, clazz))
-                                                .filter(Optional::isPresent)
-                                                .map(Optional::get)
-                                                .findFirst();
+                                        getRecoverableException(failure);
                                 if (recoverableException.isPresent()) {
                                     LOG.warn(
-                                            "Encountered recoverable exception while subscribing to shard {}.",
+                                            "Encountered recoverable exception while reading from to shard {}.",
                                             shardId,
                                             recoverableException.get());
                                     activateSubscription();
@@ -210,5 +213,13 @@ class FanOutKinesisShardSubscription {
         }
 
         return null;
+    }
+
+    private Optional<? extends Throwable> getRecoverableException(Throwable throwable) {
+        return RECOVERABLE_EXCEPTIONS.stream()
+                .map(clazz -> ExceptionUtils.findThrowable(throwable, clazz))
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .findFirst();
     }
 }
