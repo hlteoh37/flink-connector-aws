@@ -34,6 +34,7 @@ import java.time.Instant;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
+import static org.apache.flink.connector.kinesis.source.split.StartingPositionUtil.toSdkStartingPosition;
 import static org.apache.flink.connector.kinesis.source.util.KinesisAsyncClientProvider.TestingAsyncKinesisClient.SUBSCRIBE_TO_SHARD_RESPONSE_FUTURE;
 import static org.apache.flink.connector.kinesis.source.util.TestUtil.CONSUMER_ARN;
 import static org.apache.flink.connector.kinesis.source.util.TestUtil.generateShardId;
@@ -76,7 +77,7 @@ class KinesisAsyncStreamProxyTest {
                 SubscribeToShardRequest.builder()
                         .consumerARN(CONSUMER_ARN)
                         .shardId(shardId)
-                        .startingPosition(startingPosition.getSdkStartingPosition())
+                        .startingPosition(toSdkStartingPosition(startingPosition))
                         .build();
         assertThat(result).isEqualTo(SUBSCRIBE_TO_SHARD_RESPONSE_FUTURE);
         assertThat(testKinesisClient.getSubscribeToShardRequest()).isEqualTo(expectedRequest);

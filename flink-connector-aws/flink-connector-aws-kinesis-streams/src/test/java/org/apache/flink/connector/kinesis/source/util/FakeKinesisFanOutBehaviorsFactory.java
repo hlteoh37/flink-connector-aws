@@ -27,6 +27,7 @@ import java.util.stream.IntStream;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
+import static org.apache.flink.connector.kinesis.source.split.StartingPositionUtil.toSdkStartingPosition;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
@@ -246,7 +247,7 @@ public class FakeKinesisFanOutBehaviorsFactory {
                     SubscribeToShardRequest.builder()
                             .consumerARN(consumerArn)
                             .shardId(shardId)
-                            .startingPosition(startingPosition.getSdkStartingPosition())
+                            .startingPosition(toSdkStartingPosition(startingPosition))
                             .build());
 
             return CompletableFuture.supplyAsync(

@@ -29,6 +29,8 @@ import software.amazon.awssdk.services.kinesis.model.SubscribeToShardResponseHan
 import java.io.IOException;
 import java.util.concurrent.CompletableFuture;
 
+import static org.apache.flink.connector.kinesis.source.split.StartingPositionUtil.toSdkStartingPosition;
+
 /** Implementation of async stream proxy for the Kinesis client. */
 @Internal
 public class KinesisAsyncStreamProxy implements AsyncStreamProxy {
@@ -51,7 +53,7 @@ public class KinesisAsyncStreamProxy implements AsyncStreamProxy {
                 SubscribeToShardRequest.builder()
                         .consumerARN(consumerArn)
                         .shardId(shardId)
-                        .startingPosition(startingPosition.getSdkStartingPosition())
+                        .startingPosition(toSdkStartingPosition(startingPosition))
                         .build();
         return kinesisAsyncClient.subscribeToShard(request, responseHandler);
     }
