@@ -83,7 +83,7 @@ public interface StreamProxy extends Closeable {
      * De-registers an enhanced fan-out consumer against the stream.
      *
      * @param consumerArn the ARN of the consumer to deregister
-     * @return the register stream consumer response
+     * @return the de-register stream consumer response
      */
     DeregisterStreamConsumerResponse deregisterStreamConsumer(final String consumerArn);
 
