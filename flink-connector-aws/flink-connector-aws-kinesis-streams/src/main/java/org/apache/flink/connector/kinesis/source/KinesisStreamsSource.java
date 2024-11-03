@@ -347,13 +347,11 @@ public class KinesisStreamsSource<T>
         final BackoffStrategy backoffStrategy =
                 BackoffStrategy.exponentialDelayHalfJitter(initialDelay, maxDelay);
 
-        StandardRetryStrategy.Builder retryStrategyBuilder =
-                SdkDefaultRetryStrategy.standardRetryStrategyBuilder()
-                        .backoffStrategy(backoffStrategy)
-                        .throttlingBackoffStrategy(backoffStrategy)
-                        .circuitBreakerEnabled(false)
-                        .maxAttempts(maxAttempts);
-
-        return retryStrategyBuilder;
+        return SdkDefaultRetryStrategy.standardRetryStrategyBuilder()
+                .backoffStrategy(backoffStrategy)
+                .throttlingBackoffStrategy(backoffStrategy)
+                .circuitBreakerEnabled(false)
+                .retryOnExceptionOrCauseInstanceOf(LimitExceededException.class)
+                .maxAttempts(maxAttempts);
     }
 }

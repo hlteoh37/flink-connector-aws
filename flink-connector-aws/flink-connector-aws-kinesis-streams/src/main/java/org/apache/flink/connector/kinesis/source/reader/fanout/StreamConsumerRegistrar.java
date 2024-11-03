@@ -24,13 +24,18 @@ import org.apache.flink.util.Preconditions;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import software.amazon.awssdk.arns.Arn;
 import software.amazon.awssdk.services.kinesis.model.DescribeStreamConsumerResponse;
 import software.amazon.awssdk.services.kinesis.model.RegisterStreamConsumerResponse;
 import software.amazon.awssdk.services.kinesis.model.ResourceInUseException;
+import software.amazon.awssdk.services.kinesis.model.ResourceNotFoundException;
+
+import java.time.Instant;
 
 import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.ConsumerLifecycle.JOB_MANAGED;
 import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_CONSUMER_LIFECYCLE;
 import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_CONSUMER_NAME;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_DEREGISTER_CONSUMER_TIMEOUT;
 import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.READER_TYPE;
 import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.ReaderType.EFO;
 
@@ -102,10 +107,7 @@ public class StreamConsumerRegistrar {
         }
     }
 
-    /**
-     * De-registers stream consumer from specified stream, if needed. This method does not wait for
-     * the consumer to be deregistered.
-     */
+    /** De-registers stream consumer from specified stream, if needed. */
     public void deregisterStreamConsumer() {
         if (sourceConfig.get(READER_TYPE) == EFO
                 && sourceConfig.get(EFO_CONSUMER_LIFECYCLE) == JOB_MANAGED) {
@@ -117,6 +119,26 @@ public class StreamConsumerRegistrar {
             }
             kinesisStreamProxy.deregisterStreamConsumer(consumerArn);
             LOG.info("De-registered stream consumer - {}", consumerArn);
+
+            Instant timeout = Instant.now().plus(sourceConfig.get(EFO_DEREGISTER_CONSUMER_TIMEOUT));
+            String consumerName = Arn.fromString(consumerArn).resourceAsString();
+            while (Instant.now().isBefore(timeout)) {
+                try {
+                    DescribeStreamConsumerResponse response =
+                            kinesisStreamProxy.describeStreamConsumer(streamArn, consumerName);
+                    LOG.info(
+                            "Waiting for stream consumer to be deregistered - {} {} {}",
+                            streamArn,
+                            consumerName,
+                            response.consumerDescription().consumerStatusAsString());
+
+                } catch (ResourceNotFoundException e) {
+                    LOG.info("Stream consumer {} has been deregistered", consumerArn);
+                    return;
+                }
+            }
+            LOG.warn(
+                    "Timed out waiting for stream consumer to be deregistered. There may be leaked EFO consumers on the Kinesis stream.");
         }
     }
 }
