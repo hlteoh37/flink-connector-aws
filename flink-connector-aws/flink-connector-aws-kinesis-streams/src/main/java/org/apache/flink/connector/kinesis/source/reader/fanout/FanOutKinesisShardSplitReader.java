@@ -28,6 +28,7 @@ import org.apache.flink.connector.kinesis.source.split.KinesisShardSplitState;
 
 import software.amazon.awssdk.services.kinesis.model.SubscribeToShardEvent;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -39,16 +40,19 @@ import java.util.Map;
 public class FanOutKinesisShardSplitReader extends KinesisShardSplitReaderBase {
     private final AsyncStreamProxy asyncStreamProxy;
     private final String consumerArn;
+    private final Duration subscriptionTimeout;
 
     private final Map<String, FanOutKinesisShardSubscription> splitSubscriptions = new HashMap<>();
 
     public FanOutKinesisShardSplitReader(
             AsyncStreamProxy asyncStreamProxy,
             String consumerArn,
-            Map<String, KinesisShardMetrics> shardMetricGroupMap) {
+            Map<String, KinesisShardMetrics> shardMetricGroupMap,
+            Duration subscriptionTimeout) {
         super(shardMetricGroupMap);
         this.asyncStreamProxy = asyncStreamProxy;
         this.consumerArn = consumerArn;
+        this.subscriptionTimeout = subscriptionTimeout;
     }
 
     @Override
@@ -77,7 +81,8 @@ public class FanOutKinesisShardSplitReader extends KinesisShardSplitReaderBase {
                             asyncStreamProxy,
                             consumerArn,
                             split.getShardId(),
-                            split.getStartingPosition());
+                            split.getStartingPosition(),
+                            subscriptionTimeout);
             subscription.activateSubscription();
             splitSubscriptions.put(split.splitId(), subscription);
         }

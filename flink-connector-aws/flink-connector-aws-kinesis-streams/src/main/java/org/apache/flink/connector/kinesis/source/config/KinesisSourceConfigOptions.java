@@ -95,6 +95,12 @@ public class KinesisSourceConfigOptions {
     public static final ConfigOption<String> EFO_CONSUMER_NAME =
             ConfigOptions.key("efo.consumer.name").stringType().noDefaultValue();
 
+    public static final ConfigOption<Duration> EFO_CONSUMER_SUBSCRIPTION_TIMEOUT =
+            ConfigOptions.key("efo.consumer.subscription.timeout")
+                    .durationType()
+                    .defaultValue(Duration.ofMillis(60000))
+                    .withDescription("Timeout for EFO Consumer subscription.");
+
     public static final ConfigOption<Duration>
             EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MIN_DELAY_OPTION =
                     ConfigOptions.key("efo.consumer.describe.retry-strategy.delay.min")

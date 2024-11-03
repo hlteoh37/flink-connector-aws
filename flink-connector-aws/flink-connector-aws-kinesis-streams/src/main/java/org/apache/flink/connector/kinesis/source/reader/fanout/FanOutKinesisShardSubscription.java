@@ -73,10 +73,8 @@ public class FanOutKinesisShardSubscription {
     private final String consumerArn;
     private final String shardId;
 
-    // TODO: configure these
-    private final Duration subscriptionTimeout = Duration.ofSeconds(60);
+    private final Duration subscriptionTimeout;
 
-    // TODO: configure these
     // Queue is meant for eager retrieval of records from the Kinesis stream. We will always have 2
     // record batches available on next read.
     private final BlockingQueue<SubscribeToShardEvent> eventQueue = new LinkedBlockingQueue<>(2);
@@ -92,11 +90,13 @@ public class FanOutKinesisShardSubscription {
             AsyncStreamProxy kinesis,
             String consumerArn,
             String shardId,
-            StartingPosition startingPosition) {
+            StartingPosition startingPosition,
+            Duration subscriptionTimeout) {
         this.kinesis = kinesis;
         this.consumerArn = consumerArn;
         this.shardId = shardId;
         this.startingPosition = startingPosition;
+        this.subscriptionTimeout = subscriptionTimeout;
     }
 
     /** Method to allow eager activation of the subscription. */

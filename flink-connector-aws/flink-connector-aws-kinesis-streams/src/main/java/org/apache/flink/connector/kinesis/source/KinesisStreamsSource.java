@@ -81,6 +81,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
 
 import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_CONSUMER_NAME;
+import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_CONSUMER_SUBSCRIPTION_TIMEOUT;
 import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_ATTEMPTS_OPTION;
 import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MAX_DELAY_OPTION;
 import static org.apache.flink.connector.kinesis.source.config.KinesisSourceConfigOptions.EFO_DESCRIBE_CONSUMER_RETRY_STRATEGY_MIN_DELAY_OPTION;
@@ -226,7 +227,8 @@ public class KinesisStreamsSource<T>
                         new FanOutKinesisShardSplitReader(
                                 createKinesisAsyncStreamProxy(streamArn, sourceConfig),
                                 consumerArn,
-                                shardMetricGroupMap);
+                                shardMetricGroupMap,
+                                sourceConfig.get(EFO_CONSUMER_SUBSCRIPTION_TIMEOUT));
             default:
                 throw new IllegalArgumentException("Unsupported reader type: " + readerType);
         }

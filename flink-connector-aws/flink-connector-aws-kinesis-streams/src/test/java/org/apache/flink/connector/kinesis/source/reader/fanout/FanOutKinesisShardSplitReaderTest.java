@@ -50,6 +50,7 @@ import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 /** Test for {@link FanOutKinesisShardSplitReader}. */
 public class FanOutKinesisShardSplitReaderTest {
     private static final String TEST_SHARD_ID = TestUtil.generateShardId(1);
+    private static final Duration TEST_SUBSCRIPTION_TIMEOUT = Duration.ofMillis(1000);
 
     SplitReader<Record, KinesisShardSplit> splitReader;
 
@@ -83,7 +84,10 @@ public class FanOutKinesisShardSplitReaderTest {
         testAsyncStreamProxy = FakeKinesisFanOutBehaviorsFactory.boundedShard().build();
         splitReader =
                 new FanOutKinesisShardSplitReader(
-                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+                        testAsyncStreamProxy,
+                        CONSUMER_ARN,
+                        shardMetricGroupMap,
+                        TEST_SUBSCRIPTION_TIMEOUT);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
 
@@ -103,7 +107,10 @@ public class FanOutKinesisShardSplitReaderTest {
                 FakeKinesisFanOutBehaviorsFactory.resourceNotFoundWhenObtainingSubscription();
         splitReader =
                 new FanOutKinesisShardSplitReader(
-                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+                        testAsyncStreamProxy,
+                        CONSUMER_ARN,
+                        shardMetricGroupMap,
+                        TEST_SUBSCRIPTION_TIMEOUT);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
 
@@ -127,7 +134,10 @@ public class FanOutKinesisShardSplitReaderTest {
                         .build();
         splitReader =
                 new FanOutKinesisShardSplitReader(
-                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+                        testAsyncStreamProxy,
+                        CONSUMER_ARN,
+                        shardMetricGroupMap,
+                        TEST_SUBSCRIPTION_TIMEOUT);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
 
@@ -143,7 +153,10 @@ public class FanOutKinesisShardSplitReaderTest {
                 FakeKinesisFanOutBehaviorsFactory.boundedShard().withBatchCount(0).build();
         splitReader =
                 new FanOutKinesisShardSplitReader(
-                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+                        testAsyncStreamProxy,
+                        CONSUMER_ARN,
+                        shardMetricGroupMap,
+                        TEST_SUBSCRIPTION_TIMEOUT);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
 
@@ -175,7 +188,10 @@ public class FanOutKinesisShardSplitReaderTest {
                 FakeKinesisFanOutBehaviorsFactory.boundedShard().withBatchCount(0).build();
         splitReader =
                 new FanOutKinesisShardSplitReader(
-                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+                        testAsyncStreamProxy,
+                        CONSUMER_ARN,
+                        shardMetricGroupMap,
+                        TEST_SUBSCRIPTION_TIMEOUT);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
 
@@ -204,7 +220,10 @@ public class FanOutKinesisShardSplitReaderTest {
     public void testWakeUpIsNoOp() {
         splitReader =
                 new FanOutKinesisShardSplitReader(
-                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+                        testAsyncStreamProxy,
+                        CONSUMER_ARN,
+                        shardMetricGroupMap,
+                        TEST_SUBSCRIPTION_TIMEOUT);
 
         // When wakeup is called
         // Then no exception is thrown and no-op
@@ -222,7 +241,10 @@ public class FanOutKinesisShardSplitReaderTest {
                         .build();
         splitReader =
                 new FanOutKinesisShardSplitReader(
-                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+                        testAsyncStreamProxy,
+                        CONSUMER_ARN,
+                        shardMetricGroupMap,
+                        TEST_SUBSCRIPTION_TIMEOUT);
         KinesisShardSplit testSplit = getTestSplit(TEST_SHARD_ID);
         splitReader.handleSplitsChanges(new SplitsAddition<>(Collections.singletonList(testSplit)));
 
@@ -261,7 +283,10 @@ public class FanOutKinesisShardSplitReaderTest {
                 FakeKinesisFanOutBehaviorsFactory.testCloseStreamProxy();
         splitReader =
                 new FanOutKinesisShardSplitReader(
-                        trackCloseStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+                        trackCloseStreamProxy,
+                        CONSUMER_ARN,
+                        shardMetricGroupMap,
+                        TEST_SUBSCRIPTION_TIMEOUT);
 
         // When split reader is not closed
         // Then stream proxy is still open
@@ -290,7 +315,10 @@ public class FanOutKinesisShardSplitReaderTest {
                         .build();
         splitReader =
                 new FanOutKinesisShardSplitReader(
-                        testAsyncStreamProxy, CONSUMER_ARN, shardMetricGroupMap);
+                        testAsyncStreamProxy,
+                        CONSUMER_ARN,
+                        shardMetricGroupMap,
+                        TEST_SUBSCRIPTION_TIMEOUT);
         splitReader.handleSplitsChanges(
                 new SplitsAddition<>(Collections.singletonList(getTestSplit(TEST_SHARD_ID))));
         consumeAllRecordsFromKinesis(splitReader, 5);
